@@ -9,7 +9,7 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=database;Database=ContaMenteDB;User Id=sa;Password=ContaMenteDB
+      - ConnectionStrings__DefaultConnection=Server=database;Database=ContaMenteDB;User Id=sa;Password=MyC0mpl3xP@ssw0rd
     depends_on:
       - database
 
@@ -17,7 +17,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "ContaMenteDB"
+      MSSQL_SA_PASSWORD: "MyC0mpl3xP@ssw0rd"
       MSSQL_PID: "Express"
     ports:
       - "1433:1433"
