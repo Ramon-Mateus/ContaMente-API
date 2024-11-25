@@ -18,7 +18,7 @@ namespace ContaMente.Controllers
         [HttpGet]
         public IActionResult GetGastos()
         {
-            var gastos = _context.Gastos.ToList();
+            var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
 
             return Ok(gastos);
         }
@@ -26,7 +26,7 @@ namespace ContaMente.Controllers
         [HttpGet("{id}")]
         public IActionResult GetGastosById(int id)
         {
-            var gasto = _context.Gastos.FirstOrDefault(g => g.Id == id);
+            var gasto = _context.Gastos.Include(g => g.Categoria).FirstOrDefault(g => g.Id == id);
 
             if (gasto == null)
             {
