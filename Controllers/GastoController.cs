@@ -1,9 +1,7 @@
-﻿using ContaMente.Contexts;
-using ContaMente.DTOs;
+﻿using ContaMente.DTOs;
 using ContaMente.Models;
-using Microsoft.AspNetCore.Http;
+using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Controllers
 {
@@ -11,22 +9,22 @@ namespace ContaMente.Controllers
     [ApiController]
     public class GastoController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        
-        public GastoController(ApplicationDbContext context) => _context = context;
+        private readonly IGastoService _gastoService;
+
+        public GastoController(IGastoService gastoService) => _gastoService = gastoService;
 
         [HttpGet]
-        public IActionResult GetGastos()
+        public async Task<IActionResult> GetGastos()
         {
-            var gastos = _context.Gastos.Include(g => g.Categoria).ToList();
+            var gastos = await _gastoService.GetGastos();
 
             return Ok(gastos);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetGastosById(int id)
+        public async Task<IActionResult> GetGastoById(int id)
         {
-            var gasto = _context.Gastos.Include(g => g.Categoria).FirstOrDefault(g => g.Id == id);
+            var gasto = await _gastoService.GetGastoById(id);
 
             if (gasto == null)
             {
@@ -44,18 +42,9 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var gasto = new Gasto
-            {
-                Valor = createGastoDto.Valor,
-                Descricao = createGastoDto.Descricao,
-                Data = createGastoDto.Data,
-                CategoriaId = createGastoDto.CategoriaId
-            };
-            
-            _context.Gastos.Add(gasto);
-            await _context.SaveChangesAsync();
-            
-            return CreatedAtAction(nameof(GetGastosById), new { id = gasto.Id }, gasto);
+            var gasto = await _gastoService.CreateGasto(createGastoDto);
+
+            return CreatedAtAction(nameof(GetGastoById), new { id = gasto.Id }, gasto);
         }
 
         [HttpPut("{id}")]
@@ -66,34 +55,12 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var gasto = await _context.Gastos.FirstOrDefaultAsync(g => g.Id == id);
+            var gasto = await _gastoService.UpdateGasto(id, updateGastoDto);
 
-            if(gasto == null)
+            if (gasto == null)
             {
                 return NotFound();
             }
-
-            if(updateGastoDto.Valor.HasValue)
-            {
-                gasto.Valor = updateGastoDto.Valor.Value;
-            }
-
-            if(updateGastoDto.Data.HasValue)
-            {
-                gasto.Data = updateGastoDto.Data.Value;
-            }
-
-            if(!string.IsNullOrEmpty(updateGastoDto.Descricao))
-            {
-                gasto.Descricao = updateGastoDto.Descricao;
-            }
-
-            if (updateGastoDto.CategoriaId.HasValue)
-            {
-                gasto.CategoriaId = updateGastoDto.CategoriaId.Value;
-            }
-            
-            await _context.SaveChangesAsync();
 
             return Ok(gasto);
         }
@@ -101,15 +68,13 @@ namespace ContaMente.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGasto(int id)
         {
-            var gasto = await _context.Gastos.FirstOrDefaultAsync(g => g.Id == id);
+            var result = await _gastoService.DeleteGasto(id);
 
-            if (gasto == null)
+            if (!result)
             {
                 return NotFound();
             }
             
-            _context.Gastos.Remove(gasto);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }
