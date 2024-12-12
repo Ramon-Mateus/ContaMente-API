@@ -36,7 +36,7 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 dotnet tool install --global dotnet-ef
 ```
 
-_Ap�s instalar os itens listados acima, vamos baixar a imagem docker do SQL Server e subir o container com a imagem baixada._
+_Após instalar os itens listados acima, vamos baixar a imagem docker do SQL Server e subir o container com a imagem baixada._
 
 ## Docker
 - Baixar a imagem do MSSQL:
