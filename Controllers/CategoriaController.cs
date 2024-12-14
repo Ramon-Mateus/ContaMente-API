@@ -1,6 +1,7 @@
 ﻿using ContaMente.Contexts;
 using ContaMente.DTOs;
 using ContaMente.Models;
+using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,22 +11,22 @@ namespace ContaMente.Controllers
     [ApiController]
     public class CategoriaController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoriaService _categoriaService;
 
-        public CategoriaController(ApplicationDbContext context) => _context = context;
+        public CategoriaController(ICategoriaService categoriaService) => _categoriaService = categoriaService;
 
         [HttpGet]
-        public IActionResult GetCategorias()
+        public async Task<IActionResult> GetCategorias()
         {
-            var categorias = _context.Categorias.Include(c => c.Gastos).ToList();
+            var categorias = await _categoriaService.GetCategorias();
 
             return Ok(categorias);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetCategoriasById(int id)
+        public async Task<IActionResult> GetCategoriaById(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = await _categoriaService.GetCategoriaById(id);
 
             if (categoria == null)
             {
@@ -43,15 +44,9 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var categoria = new Categoria
-            {
-                Nome = createCategoriaDto.Nome
-            };
+            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto);
 
-            _context.Categorias.Add(categoria);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCategoriasById), new { id = categoria.Id }, categoria);
+            return CreatedAtAction(nameof(GetCategoriaById), new { id = categoria.Id }, categoria);
         }
 
         [HttpPut("{id}")]
@@ -62,32 +57,26 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
+            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto);
 
             if (categoria == null)
             {
                 return NotFound();
             }
-
-            categoria.Nome = updateCategoriaDto.Nome;
-
-            await _context.SaveChangesAsync();
-
+            
             return Ok(categoria);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategoria(int id)
         {
-            var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
+            var result = await _categoriaService.DeleteCategoria(id);
 
-            if (categoria == null)
+            if (!result)
             {
                 return NotFound();
             }
 
-            _context.Categorias.Remove(categoria);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }
