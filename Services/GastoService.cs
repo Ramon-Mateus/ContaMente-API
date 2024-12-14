@@ -13,7 +13,10 @@ namespace ContaMente.Services
 
         public async Task<List<Gasto>> GetGastos()
         {
-            var gastos = await _context.Gastos.Include(g => g.Categoria).ToListAsync();
+            var gastos = await _context.Gastos
+                .Include(g => g.Categoria)
+                .OrderByDescending(g => g.Data)
+                .ToListAsync();
 
             return gastos;
         }
