@@ -1,29 +1,24 @@
-using ContaMente.Contexts;
 using ContaMente.DTOs;
 using ContaMente.Models;
+using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services;
 
 public class CategoriaService : ICategoriaService
 {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoriaRepository _categoriaRepository;
 
-        public CategoriaService(ApplicationDbContext context) => _context = context;
+        public CategoriaService(ICategoriaRepository categoriaRepository) => _categoriaRepository = categoriaRepository;
         
         public async Task<List<Categoria>> GetCategorias()
         {
-            var categorias = await _context.Categorias.Include(c => c.Gastos).ToListAsync();
-
-            return categorias;
+            return await _categoriaRepository.GetCategorias();
         }
         
         public async Task<Categoria?> GetCategoriaById(int id)
         {
-            var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.Id == id);
-            
-            return categoria;
+            return await _categoriaRepository.GetCategoriaById(id);
         }
         
         public async Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto)
@@ -33,10 +28,7 @@ public class CategoriaService : ICategoriaService
                 Nome = createCategoriaDto.Nome
             };
 
-            _context.Categorias.Add(categoria);
-            await _context.SaveChangesAsync();
-
-            return categoria;
+            return await _categoriaRepository.CreateCategoria(categoria);
         }
         
         public async Task<Categoria?> UpdateCategoria(int id, UpdateCategoriaDto updateCategoriaDto)
@@ -50,9 +42,7 @@ public class CategoriaService : ICategoriaService
             
             categoria.Nome = updateCategoriaDto.Nome;
 
-            await _context.SaveChangesAsync();
-
-            return categoria;
+            return await _categoriaRepository.UpdateCategoria(categoria);
         }
         
         public async Task<bool> DeleteCategoria(int id)
@@ -64,9 +54,6 @@ public class CategoriaService : ICategoriaService
                 return false;
             }
 
-            _context.Categorias.Remove(categoria);
-            await _context.SaveChangesAsync();
-            
-            return true;
+            return await _categoriaRepository.DeleteCategoria(categoria);
         }
 }

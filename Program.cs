@@ -12,6 +12,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IGastoRepository, GastoRepository>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
