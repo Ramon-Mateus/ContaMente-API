@@ -1,31 +1,23 @@
-﻿using ContaMente.Contexts;
-using ContaMente.DTOs;
+﻿using ContaMente.DTOs;
 using ContaMente.Models;
+using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services
 {
     public class GastoService : IGastoService
     {
-        private readonly ApplicationDbContext _context;
-        public GastoService(ApplicationDbContext context) => _context = context;
+        private readonly IGastoRepository _gastoRepository;
+        public GastoService(IGastoRepository gastoRepository) => _gastoRepository = gastoRepository;
 
         public async Task<List<Gasto>> GetGastos()
         {
-            var gastos = await _context.Gastos
-                .Include(g => g.Categoria)
-                .OrderByDescending(g => g.Data)
-                .ToListAsync();
-
-            return gastos;
+            return await _gastoRepository.GetGastos();
         }
 
         public async Task<Gasto?> GetGastoById(int id)
         {
-            var gasto = await _context.Gastos.Include(g => g.Categoria).FirstOrDefaultAsync(g => g.Id == id);
-
-            return gasto;
+            return await _gastoRepository.GetGastoById(id);
         }
 
         public async Task<Gasto> CreateGasto(CreateGastoDto createGastoDto)
@@ -38,10 +30,7 @@ namespace ContaMente.Services
                 CategoriaId = createGastoDto.CategoriaId
             };
 
-            _context.Gastos.Add(gasto);
-            await _context.SaveChangesAsync();
-
-            return gasto;
+            return await _gastoRepository.CreateGasto(gasto);
         }
 
         public async Task<Gasto?> UpdateGasto(int id, UpdateGastoDto updateGastoDto)
@@ -73,9 +62,7 @@ namespace ContaMente.Services
                 gasto.CategoriaId = updateGastoDto.CategoriaId.Value;
             }
 
-            await _context.SaveChangesAsync();
-
-            return gasto;
+            return await _gastoRepository.UpdateGasto(gasto);
         }
 
         public async Task<bool> DeleteGasto(int id)
@@ -87,10 +74,7 @@ namespace ContaMente.Services
                 return false;
             }
 
-            _context.Gastos.Remove(gasto);
-            await _context.SaveChangesAsync();
-
-            return true;
+            return await _gastoRepository.DeleteGasto(gasto);
         }
     }
 }
