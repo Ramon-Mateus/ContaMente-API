@@ -4,7 +4,7 @@ namespace ContaMente.Repositories.Interfaces;
 
 public interface IGastoRepository
 {
-    Task<List<Gasto>> GetGastos();
+    IQueryable<Gasto> GetGastos();
     Task<Gasto?> GetGastoById(int id);
     Task<Gasto> CreateGasto(Gasto gasto);
     Task<Gasto?> UpdateGasto(Gasto gasto);

@@ -2,6 +2,7 @@
 using ContaMente.Models;
 using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services
 {
@@ -10,9 +11,19 @@ namespace ContaMente.Services
         private readonly IGastoRepository _gastoRepository;
         public GastoService(IGastoRepository gastoRepository) => _gastoRepository = gastoRepository;
 
-        public async Task<List<Gasto>> GetGastos()
+        public async Task<List<Gasto>> GetGastos(int? mes, int? ano)
         {
-            return await _gastoRepository.GetGastos();
+            var query = _gastoRepository.GetGastos();
+            
+            if (mes.HasValue)
+                query = query.Where(g => g.Data.Month == mes.Value);
+
+            if (ano.HasValue)
+                query = query.Where(g => g.Data.Year == ano.Value);
+
+            return await query
+                .OrderByDescending(g => g.Data)
+                .ToListAsync();
         }
 
         public async Task<Gasto?> GetGastoById(int id)

@@ -11,12 +11,9 @@ public class GastoRepository : IGastoRepository
     
     public GastoRepository(ApplicationDbContext context) => _context = context;
     
-    public async Task<List<Gasto>> GetGastos()
+    public IQueryable<Gasto> GetGastos()
     {
-        return await _context.Gastos
-            .Include(g => g.Categoria)
-            .OrderByDescending(g => g.Data)
-            .ToListAsync();
+        return _context.Gastos.Include(g => g.Categoria);
     }
 
     public async Task<Gasto?> GetGastoById(int id)

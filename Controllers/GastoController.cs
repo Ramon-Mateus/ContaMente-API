@@ -14,9 +14,18 @@ namespace ContaMente.Controllers
         public GastoController(IGastoService gastoService) => _gastoService = gastoService;
 
         [HttpGet]
-        public async Task<IActionResult> GetGastos()
+        public async Task<IActionResult> GetGastos([FromQuery] int? mes, [FromQuery] int? ano)
         {
-            var gastos = await _gastoService.GetGastos();
+            if (mes < 1 || mes > 12)
+                return BadRequest("O mês deve estar entre 1 e 12.");
+
+            if (ano < 1)
+                return BadRequest("Ano inválido.");
+            
+            if(!mes.HasValue || !ano.HasValue)
+                return BadRequest("Mês ou ano não especificado.");
+            
+            var gastos = await _gastoService.GetGastos(mes, ano);
 
             return Ok(gastos);
         }
