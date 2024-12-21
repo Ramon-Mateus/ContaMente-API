@@ -49,7 +49,12 @@ docker pull mcr.microsoft.com/mssql/server
 docker run --name sqlserver -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=SenhaForte123#" -p 1433:1433 -d mcr.microsoft.com/mssql/server
 ```
 
-- Para verificar se o container subiu corretamente execute o comando abaixo no terminal e veja se o status está UP:
+- Rodar o container:
+```shell
+docker start sqlserver
+```
+
+- Para verificar se o container subiu e rodou corretamente execute o comando abaixo no terminal e veja se o status está UP:
 ```shell
 docker ps
 ```
