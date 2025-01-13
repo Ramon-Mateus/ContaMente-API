@@ -44,7 +44,14 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto, userId);
 
             return CreatedAtAction(nameof(GetCategoriaById), new { id = categoria.Id }, categoria);
         }

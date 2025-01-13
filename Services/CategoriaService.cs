@@ -21,11 +21,12 @@ public class CategoriaService : ICategoriaService
             return await _categoriaRepository.GetCategoriaById(id);
         }
         
-        public async Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto)
+        public async Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto, string userId)
         {
             var categoria = new Categoria
             {
-                Nome = createCategoriaDto.Nome
+                Nome = createCategoriaDto.Nome,
+                UserId = userId
             };
 
             return await _categoriaRepository.CreateCategoria(categoria);

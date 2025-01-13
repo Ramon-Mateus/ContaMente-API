@@ -7,7 +7,7 @@ namespace ContaMente.Services.Interfaces
     {
         Task<List<Categoria>> GetCategorias();
         Task<Categoria?> GetCategoriaById(int id);
-        Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto);
+        Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto, string userId);
         Task<Categoria?> UpdateCategoria(int id, UpdateCategoriaDto updateCategoriaDto);
         Task<bool> DeleteCategoria(int id);
     }
