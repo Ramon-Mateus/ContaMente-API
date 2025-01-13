@@ -4,8 +4,8 @@ namespace ContaMente.Repositories.Interfaces;
 
 public interface ICategoriaRepository
 {
-    Task<List<Categoria>> GetCategorias();
-    Task<Categoria?> GetCategoriaById(int id);
+    Task<List<Categoria>> GetCategorias(string userId);
+    Task<Categoria?> GetCategoriaById(int id, string userId);
     Task<Categoria> CreateCategoria(Categoria categoria);
     Task<Categoria?> UpdateCategoria(Categoria categoria);
     Task<bool> DeleteCategoria(Categoria categoria);

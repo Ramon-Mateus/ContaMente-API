@@ -11,14 +11,14 @@ public class CategoriaService : ICategoriaService
 
         public CategoriaService(ICategoriaRepository categoriaRepository) => _categoriaRepository = categoriaRepository;
         
-        public async Task<List<Categoria>> GetCategorias()
+        public async Task<List<Categoria>> GetCategorias(string userId)
         {
-            return await _categoriaRepository.GetCategorias();
+            return await _categoriaRepository.GetCategorias(userId);
         }
         
-        public async Task<Categoria?> GetCategoriaById(int id)
+        public async Task<Categoria?> GetCategoriaById(int id, string userId)
         {
-            return await _categoriaRepository.GetCategoriaById(id);
+            return await _categoriaRepository.GetCategoriaById(id, userId);
         }
         
         public async Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto, string userId)
@@ -32,9 +32,9 @@ public class CategoriaService : ICategoriaService
             return await _categoriaRepository.CreateCategoria(categoria);
         }
         
-        public async Task<Categoria?> UpdateCategoria(int id, UpdateCategoriaDto updateCategoriaDto)
+        public async Task<Categoria?> UpdateCategoria(int id, UpdateCategoriaDto updateCategoriaDto, string userId)
         {
-            var categoria = await this.GetCategoriaById(id);
+            var categoria = await this.GetCategoriaById(id, userId);
 
             if (categoria == null)
             {
@@ -46,9 +46,9 @@ public class CategoriaService : ICategoriaService
             return await _categoriaRepository.UpdateCategoria(categoria);
         }
         
-        public async Task<bool> DeleteCategoria(int id)
+        public async Task<bool> DeleteCategoria(int id, string userId)
         {
-            var categoria = await this.GetCategoriaById(id);
+            var categoria = await this.GetCategoriaById(id, userId);
 
             if (categoria == null)
             {
