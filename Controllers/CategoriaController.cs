@@ -1,14 +1,14 @@
-﻿using ContaMente.Contexts;
-using ContaMente.DTOs;
+﻿using ContaMente.DTOs;
 using ContaMente.Models;
 using ContaMente.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CategoriaController : ControllerBase
     {
         private readonly ICategoriaService _categoriaService;
@@ -18,7 +18,14 @@ namespace ContaMente.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCategorias()
         {
-            var categorias = await _categoriaService.GetCategorias();
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categorias = await _categoriaService.GetCategorias(userId);
 
             return Ok(categorias);
         }
@@ -26,7 +33,14 @@ namespace ContaMente.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategoriaById(int id)
         {
-            var categoria = await _categoriaService.GetCategoriaById(id);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categoria = await _categoriaService.GetCategoriaById(id, userId);
 
             if (categoria == null)
             {
@@ -44,7 +58,14 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto, userId);
 
             return CreatedAtAction(nameof(GetCategoriaById), new { id = categoria.Id }, categoria);
         }
@@ -57,7 +78,14 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto, userId);
 
             if (categoria == null)
             {
@@ -70,7 +98,14 @@ namespace ContaMente.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategoria(int id)
         {
-            var result = await _categoriaService.DeleteCategoria(id);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var result = await _categoriaService.DeleteCategoria(id, userId);
 
             if (!result)
             {

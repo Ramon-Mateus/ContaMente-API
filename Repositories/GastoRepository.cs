@@ -11,14 +11,18 @@ public class GastoRepository : IGastoRepository
     
     public GastoRepository(ApplicationDbContext context) => _context = context;
     
-    public IQueryable<Gasto> GetGastos()
+    public IQueryable<Gasto> GetGastos(string userId)
     {
-        return _context.Gastos.Include(g => g.Categoria);
+        return _context.Gastos
+            .Include(g => g.Categoria)
+            .Where(g => g.Categoria!.UserId == userId);
     }
 
-    public async Task<Gasto?> GetGastoById(int id)
+    public async Task<Gasto?> GetGastoById(int id, string userId)
     {
-        return await _context.Gastos.Include(g => g.Categoria).FirstOrDefaultAsync(g => g.Id == id);
+        return await _context.Gastos
+            .Include(g => g.Categoria)
+            .FirstOrDefaultAsync(g => g.Id == id && g.Categoria!.UserId == userId);
     }
 
     public async Task<Gasto> CreateGasto(Gasto gasto)
