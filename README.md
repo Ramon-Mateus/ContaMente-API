@@ -26,6 +26,8 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
     class Categoria
     Categoria : int Id
     Categoria : string Nome
+    Categoria : string UserId
+    Categoria : IdentityUser User
     Categoria : List<Gasto> Gastos
 ```
 
