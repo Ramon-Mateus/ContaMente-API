@@ -1,17 +1,24 @@
 ﻿using ContaMente.DTOs;
 using ContaMente.Models;
 using ContaMente.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class GastoController : ControllerBase
     {
         private readonly IGastoService _gastoService;
+        private readonly ICategoriaService _categoriaService;
 
-        public GastoController(IGastoService gastoService) => _gastoService = gastoService;
+        public GastoController(IGastoService gastoService, ICategoriaService categoriaService)
+        {
+            _gastoService = gastoService;
+            _categoriaService = categoriaService;
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetGastos([FromQuery] int? mes, [FromQuery] int? ano)
@@ -24,8 +31,15 @@ namespace ContaMente.Controllers
             
             if(!mes.HasValue || !ano.HasValue)
                 return BadRequest("Mês ou ano não especificado.");
-            
-            var gastos = await _gastoService.GetGastos(mes, ano);
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var gastos = await _gastoService.GetGastos(mes, ano, userId);
 
             return Ok(gastos);
         }
@@ -33,7 +47,14 @@ namespace ContaMente.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetGastoById(int id)
         {
-            var gasto = await _gastoService.GetGastoById(id);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var gasto = await _gastoService.GetGastoById(id, userId);
 
             if (gasto == null)
             {
@@ -51,6 +72,20 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var categoria = await _categoriaService.GetCategoriaById(createGastoDto.CategoriaId, userId);
+
+            if(categoria == null)
+            {
+                return BadRequest("Categoria não encontrada ou não pertence ao usuário.");
+            }
+
             var gasto = await _gastoService.CreateGasto(createGastoDto);
 
             return CreatedAtAction(nameof(GetGastoById), new { id = gasto.Id }, gasto);
@@ -64,11 +99,18 @@ namespace ContaMente.Controllers
                 return BadRequest(ModelState);
             }
 
-            var gasto = await _gastoService.UpdateGasto(id, updateGastoDto);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var gasto = await _gastoService.UpdateGasto(id, updateGastoDto, userId);
 
             if (gasto == null)
             {
-                return NotFound();
+                return NotFound("Gasto não encontrado ou não pertence ao usuário.");
             }
 
             return Ok(gasto);
@@ -77,7 +119,14 @@ namespace ContaMente.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGasto(int id)
         {
-            var result = await _gastoService.DeleteGasto(id);
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var result = await _gastoService.DeleteGasto(id, userId);
 
             if (!result)
             {
