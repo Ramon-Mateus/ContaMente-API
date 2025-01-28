@@ -30,6 +30,12 @@ builder.Services
     .AddIdentityApiEndpoints<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -47,6 +53,7 @@ app.UseCors(options => options
     .AllowCredentials()
 );
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
