@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers
@@ -20,6 +19,16 @@ namespace ContaMente.Controllers
         {
             await _signInManager.SignOutAsync();
             return Ok();
+        }
+
+        [HttpGet("verificarSessao")]
+        public IActionResult VerificarSessao()
+        {
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                return Ok(true);
+            }
+            return Ok(false);
         }
     }
 }
