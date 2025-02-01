@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ContaMente.DTOs;
+using ContaMente.Services.Interfaces;
 
 namespace ContaMente.Controllers
 {
@@ -9,9 +11,15 @@ namespace ContaMente.Controllers
     {
         private readonly SignInManager<IdentityUser> _signInManager;
 
-        public AuthController(SignInManager<IdentityUser> signInManager)
+        private readonly UserManager<IdentityUser> _userManager;
+
+        private readonly IEmailService _emailService;
+
+        public AuthController(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager, IEmailService emailService)
         {
             _signInManager = signInManager;
+            _userManager = userManager;
+            _emailService = emailService;
         }
 
         [HttpPost("logout")]
@@ -29,6 +37,45 @@ namespace ContaMente.Controllers
                 return Ok(true);
             }
             return Ok(false);
+        }
+
+        [HttpPost("forgotPassword")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+                return BadRequest("Usuário não encontrado.");
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            var resetLink = $"http://localhost:4200/resetPassword?email={user.Email}&token={Uri.EscapeDataString(token)}";
+
+            await _emailService.SendResetPasswordEmail(user.Email!, resetLink);
+
+            return Ok("Link de redefinição enviado para o seu email.");
+        }
+
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+                return BadRequest("Usuário não encontrado.");
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            return Ok("Senha redefinida com sucesso.");
         }
     }
 }
