@@ -365,3 +365,6 @@ FodyWeavers.xsd
 # Ignore migrations
 Migrations/
 /.idea
+
+# Váriaveis de ambiente
+.env

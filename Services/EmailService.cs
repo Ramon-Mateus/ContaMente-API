@@ -8,16 +8,21 @@ namespace ContaMente.Services
     {
         public async Task SendResetPasswordEmail(string email, string resetLink)
         {
-            var client = new SmtpClient("smtp.gmail.com")
+            string smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST")!;
+            string smtpPort = Environment.GetEnvironmentVariable("SMTP_PORT")!;
+            string smtpUser = Environment.GetEnvironmentVariable("SMTP_USER")!;
+            string smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD")!;
+
+            var client = new SmtpClient(smtpHost)
             {
-                Port = 587,
-                Credentials = new NetworkCredential("ramonmateus00@gmail.com", ""),
+                Port = int.Parse(smtpPort),
+                Credentials = new NetworkCredential(smtpUser, smtpPassword),
                 EnableSsl = true,
             };
 
             var mailMessage = new MailMessage
             {
-                From = new MailAddress("ramonmateus00@gmail.com"),
+                From = new MailAddress(smtpUser),
                 Subject = "Recuperação de Senha",
                 Body = $"Clique no link para redefinir sua senha: {resetLink}",
                 IsBodyHtml = true,

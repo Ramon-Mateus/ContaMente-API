@@ -56,7 +56,7 @@ namespace ContaMente.Controllers
 
             await _emailService.SendResetPasswordEmail(user.Email!, resetLink);
 
-            return Ok("Link de redefinição enviado para o seu email.");
+            return Ok("Link de redefinição enviado para o email.");
         }
 
         [HttpPost("resetPassword")]
