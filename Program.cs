@@ -11,7 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IGastoRepository, GastoRepository>();
@@ -27,7 +29,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-//builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 builder.Services
@@ -51,7 +52,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors(options => options
-    .WithOrigins(new[] { "http://localhost:4200" })
+    .WithOrigins(Environment.GetEnvironmentVariable("CORS_ORIGIN")!)
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials()
