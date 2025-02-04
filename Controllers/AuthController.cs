@@ -52,7 +52,7 @@ namespace ContaMente.Controllers
 
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            var resetLink = $"http://localhost:4200/resetPassword?email={user.Email}&token={Uri.EscapeDataString(token)}";
+            var resetLink = $"https://contamente.vercel.app/resetPassword?email={user.Email}&token={Uri.EscapeDataString(token)}";
 
             await _emailService.SendResetPasswordEmail(user.Email!, resetLink);
 
