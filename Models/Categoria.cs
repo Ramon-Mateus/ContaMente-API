@@ -10,6 +10,6 @@ namespace ContaMente.Models
         [JsonIgnore]
         public string UserId { get; set; } = string.Empty;
         public IdentityUser User { get; set; } = null!;
-        public List<Gasto> Gastos { get; set; } = new List<Gasto>();
+        public List<Movimentacao> Movimentacoes { get; set; } = new List<Movimentacao>();
     }
 }
