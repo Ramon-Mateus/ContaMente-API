@@ -51,7 +51,7 @@ namespace ContaMente.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Gasto>> CreateCategoria([FromBody] CreateCategoriaDto createCategoriaDto)
+        public async Task<ActionResult<Categoria>> CreateCategoria([FromBody] CreateCategoriaDto createCategoriaDto)
         {
             if (!ModelState.IsValid)
             {

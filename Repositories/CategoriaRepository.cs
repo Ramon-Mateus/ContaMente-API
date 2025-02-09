@@ -14,7 +14,7 @@ public class CategoriaRepository : ICategoriaRepository
             public async Task<List<Categoria>> GetCategorias(string userId)
             {
                 return await _context.Categorias
-                    .Include(c => c.Gastos)
+                    .Include(c => c.Movimentacoes)
                     .Where(c => c.UserId == userId)
                     .ToListAsync();
             }

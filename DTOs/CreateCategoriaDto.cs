@@ -6,5 +6,6 @@ namespace ContaMente.DTOs
     {
         [MaxLength(100)]
         public string Nome { get; set; } = string.Empty;
+        public bool Entrada { get; set; }
     }
 }

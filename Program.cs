@@ -15,8 +15,8 @@ var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<IGastoService, GastoService>();
-builder.Services.AddScoped<IGastoRepository, GastoRepository>();
+builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
+builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
