@@ -16,7 +16,7 @@ namespace ContaMente.Controllers
         public CategoriaController(ICategoriaService categoriaService) => _categoriaService = categoriaService;
 
         [HttpGet]
-        public async Task<IActionResult> GetCategorias()
+        public async Task<IActionResult> GetCategorias([FromQuery] bool entrada)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -25,7 +25,7 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categorias = await _categoriaService.GetCategorias(userId);
+            var categorias = await _categoriaService.GetCategorias(userId, entrada);
 
             return Ok(categorias);
         }
