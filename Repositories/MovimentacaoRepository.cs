@@ -15,14 +15,20 @@ namespace ContaMente.Repositories
         public IQueryable<Movimentacao> GetMovimentacoes(string userId)
         {
             return _context.Movimentacoes
-                .Include(g => g.Categoria)
-                .Where(g => g.Categoria!.UserId == userId);
+                .Include(m => m.Categoria)
+                .Include(m => m.TipoPagamento)
+                .Include(m => m.Recorrencia)
+                .Include(m => m.Parcela)
+                .Where(m => m.Categoria!.UserId == userId);
         }
 
         public async Task<Movimentacao?> GetMovimentacaoById(int id, string userId)
         {
             return await _context.Movimentacoes
-                .Include(g => g.Categoria)
+                .Include(m => m.Categoria)
+                .Include(m => m.TipoPagamento)
+                .Include(m => m.Recorrencia)
+                .Include(m => m.Parcela)
                 .FirstOrDefaultAsync(g => g.Id == id && g.Categoria!.UserId == userId);
         }
 

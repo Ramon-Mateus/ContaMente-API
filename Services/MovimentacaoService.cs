@@ -11,15 +11,17 @@ namespace ContaMente.Services
         private readonly IMovimentacaoRepository _movimentacaoRepository;
         public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository) => _movimentacaoRepository = movimentacaoRepository;
 
-        public async Task<List<Movimentacao>> GetMovimentacoes(int? mes, int? ano, string userId)
+        public async Task<List<Movimentacao>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada)
         {
             var query = _movimentacaoRepository.GetMovimentacoes(userId);
 
             if (mes.HasValue)
-                query = query.Where(g => g.Data.Month == mes.Value);
+                query = query.Where(m => m.Data.Month == mes.Value);
 
             if (ano.HasValue)
-                query = query.Where(g => g.Data.Year == ano.Value);
+                query = query.Where(m => m.Data.Year == ano.Value);
+
+            query = query.Where(m => m.Categoria!.Entrada == entrada);
 
             return await query
                 .OrderByDescending(g => g.Data)
