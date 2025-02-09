@@ -9,7 +9,12 @@ namespace ContaMente.Services
     public class MovimentacaoService : IMovimentacaoService
     {
         private readonly IMovimentacaoRepository _movimentacaoRepository;
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository) => _movimentacaoRepository = movimentacaoRepository;
+        private readonly IParcelaService _parcelaService;
+        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IParcelaService parcelaService)
+        {
+            _movimentacaoRepository = movimentacaoRepository;
+            _parcelaService = parcelaService;
+        }
 
         public async Task<List<Movimentacao>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada)
         {
@@ -43,9 +48,44 @@ namespace ContaMente.Services
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
-                RecorrenciaId = createMovimentacaoDto.RecorrenciaId,
-                ParcelaId = createMovimentacaoDto.ParcelaId
+                RecorrenciaId = createMovimentacaoDto.RecorrenciaId
             };
+
+            if (createMovimentacaoDto.Parcela != null)
+            {
+                var parcela = new Parcela
+                {
+                    ValorTotal = createMovimentacaoDto.Parcela.ValorTotal,
+                    ValorParcela = createMovimentacaoDto.Parcela.ValorParcela,
+                    NumeroParcelas = createMovimentacaoDto.Parcela.NumeroParcelas,
+                    DataInicio = createMovimentacaoDto.Parcela.DataInicio,
+                    DataFim = createMovimentacaoDto.Parcela.DataFim
+                };
+
+                var parcelaCriada = await _parcelaService.CreateParcela(parcela);
+                movimentacao.ParcelaId = parcelaCriada.Id;
+                movimentacao.NumeroParcela = 1;
+                movimentacao.Valor = parcela.ValorParcela;
+
+                for (int i = 1; i < parcelaCriada.NumeroParcelas; i++)
+                {
+                    var dataParcela = parcelaCriada.DataInicio.AddMonths(i);
+                    var movimentacaoParcela = new Movimentacao
+                    {
+                        Valor = parcelaCriada.ValorParcela,
+                        Descricao = createMovimentacaoDto.Descricao,
+                        Data = dataParcela,
+                        Fixa = createMovimentacaoDto.Fixa,
+                        CategoriaId = createMovimentacaoDto.CategoriaId,
+                        TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
+                        RecorrenciaId = createMovimentacaoDto.RecorrenciaId,
+                        ParcelaId = parcelaCriada.Id,
+                        NumeroParcela = i + 1
+                    };
+
+                    await _movimentacaoRepository.CreateMovimentacao(movimentacaoParcela);
+                }
+            }
 
             return await _movimentacaoRepository.CreateMovimentacao(movimentacao);
         }
