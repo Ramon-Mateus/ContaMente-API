@@ -13,22 +13,54 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 ```mermaid
   classDiagram
     direction LR
-    Gasto "*"--"1" Categoria
+    Movimentacao "*"--"1" Categoria
+    Movimentacao "*"--"1" TipoPagamento
+    Movimentacao "*"--"1" Parcela
+    Movimentacao "*"--"1" Recorrencia
 
-    class Gasto
-    Gasto : int Id
-    Gasto : double Valor
-    Gasto : DateTime Data
-    Gasto : string? Descricao
-    Gasto : int CategoriaId
-    Gasto :  Categoria? Categoria
+    class Movimentacao
+    Movimentacao : int Id
+    Movimentacao : double Valor
+    Movimentacao : DateTime Data
+    Movimentacao : string? Descricao
+    Movimentacao : bool Fixa
+    Movimentacao : int? NumeroParcela
+    Movimentacao : int CategoriaId
+    Movimentacao :  Categoria? Categoria
+    Movimentacao : int TipoPagamentoId
+    Movimentacao :  TipoPagamento? TipoPagamento
+    Movimentacao : int? RecorrenciaId
+    Movimentacao :  Recorrencia? Recorrencia
+    Movimentacao : int? ParcelaId
+    Movimentacao :  Parcela? Parcela
 
     class Categoria
     Categoria : int Id
     Categoria : string Nome
     Categoria : string UserId
+    Categoria : bool Entrada
     Categoria : IdentityUser User
-    Categoria : List<Gasto> Gastos
+    Categoria : List<Movimentacao> Movimentacoes
+
+    class TipoPagamento
+    TipoPagamento : int Id
+    TipoPagamento : string Nome
+    TipoPagamento : List<Movimentacao> Movimentacoes
+
+    class Parcela
+    Parcela : int Id
+    Parcela : double ValorTotal
+    Parcela : int NumeroParcelas
+    Parcela : double ValorParcela
+    Parcela : DateTime DataInicio
+    Parcela : DateTime? DataFim
+    Parcela : List<Movimentacao> Movimentacoes
+
+    class Recorrencia
+    Recorrencia : int Id
+    Recorrencia : DateTime DataInicio
+    Recorrencia : DateTime DataFim
+    Recorrencia : List<Movimentacao> Movimentacoes
 ```
 
 # Instalar
