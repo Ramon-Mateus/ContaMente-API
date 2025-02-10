@@ -11,6 +11,7 @@ namespace ContaMente.DTOs
         [Required]
         public DateTime Data { get; set; }
         public string? Descricao { get; set; } = string.Empty;
+        public int? NumeroParcela { get; set; }
         [Required]
         public bool Fixa { get; set; }
         [Required]
@@ -18,6 +19,6 @@ namespace ContaMente.DTOs
         [Required]
         public int TipoPagamentoId { get; set; }
         public int? RecorrenciaId { get; set; }
-        public CreateParcelaDto? Parcela { get; set; }
+        public int? ParcelaId { get; set; }
     }
 }

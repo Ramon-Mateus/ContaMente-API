@@ -5,7 +5,9 @@
         public double ValorTotal { get; set; }
         public int NumeroParcelas { get; set; }
         public double ValorParcela { get; set; }
+        public string? Descricao { get; set; }
         public DateTime DataInicio { get; set; }
-        public DateTime? DataFim { get; set; } = null;
+        public int CategoriaId { get; set; }
+        public int TipoPagamentoId { get; set; }
     }
 }
