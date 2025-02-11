@@ -82,6 +82,11 @@ namespace ContaMente.Services
                 movimentacao.CategoriaId = updateMovimentacaoDto.CategoriaId.Value;
             }
 
+            if (updateMovimentacaoDto.TipoPagamentoId.HasValue)
+            {
+                movimentacao.CategoriaId = updateMovimentacaoDto.TipoPagamentoId.Value;
+            }
+
             return await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
         }
 
