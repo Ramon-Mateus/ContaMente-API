@@ -2,6 +2,7 @@
 using ContaMente.Models;
 using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services
@@ -9,9 +10,11 @@ namespace ContaMente.Services
     public class MovimentacaoService : IMovimentacaoService
     {
         private readonly IMovimentacaoRepository _movimentacaoRepository;
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository)
+        private readonly IRecorrenciaService _recorrenciaService;
+        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IRecorrenciaService recorrenciaService)
         {
             _movimentacaoRepository = movimentacaoRepository;
+            _recorrenciaService = recorrenciaService;
         }
 
         public async Task<List<Movimentacao>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada)
@@ -46,11 +49,51 @@ namespace ContaMente.Services
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
-                RecorrenciaId = createMovimentacaoDto.RecorrenciaId,
                 ParcelaId = createMovimentacaoDto.ParcelaId
             };
 
-            return await _movimentacaoRepository.CreateMovimentacao(movimentacao);
+            var createdMovimentacao = await _movimentacaoRepository.CreateMovimentacao(movimentacao);
+
+            if (createMovimentacaoDto.Fixa)
+            {
+                var recorrencia = new Recorrencia
+                {
+                    DataInicio = DateTime.Now,
+                };
+
+                recorrencia.Movimentacoes.Add(createdMovimentacao);
+                await _recorrenciaService.CreateRecorrencia(recorrencia);
+
+                RecurringJob.AddOrUpdate(
+                    $"recorrencia_{recorrencia.Id}",
+                    () => CriarMovimentacaoRecorrente(recorrencia.Id),
+                    "0 0 1 * *");
+            }
+
+            return createdMovimentacao;
+        }
+
+        public async Task CriarMovimentacaoRecorrente(int recorrenciaId)
+        {
+            var recorrencia = await _recorrenciaService.GetRecorrenciaById(recorrenciaId);
+
+            if (recorrencia != null && (recorrencia.DataFim == null || recorrencia.DataFim > DateTime.Now))
+            {
+                var movimentacaoOriginal = recorrencia.Movimentacoes.First();
+
+                var novaMovimentacao = new Movimentacao
+                {
+                    Valor = movimentacaoOriginal.Valor,
+                    Descricao = movimentacaoOriginal.Descricao,
+                    Data = DateTime.Now,
+                    Fixa = true,
+                    CategoriaId = movimentacaoOriginal.CategoriaId,
+                    TipoPagamentoId = movimentacaoOriginal.TipoPagamentoId,
+                    RecorrenciaId = recorrencia.Id
+                };
+
+                await _movimentacaoRepository.CreateMovimentacao(novaMovimentacao);
+            }
         }
 
         public async Task<Movimentacao?> UpdateMovimentacao(int id, UpdateMovimentacaoDto updateMovimentacaoDto, string userId)

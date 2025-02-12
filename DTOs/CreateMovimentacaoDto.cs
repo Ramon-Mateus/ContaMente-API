@@ -18,7 +18,6 @@ namespace ContaMente.DTOs
         public int CategoriaId { get; set; }
         [Required]
         public int TipoPagamentoId { get; set; }
-        public int? RecorrenciaId { get; set; }
         public int? ParcelaId { get; set; }
     }
 }

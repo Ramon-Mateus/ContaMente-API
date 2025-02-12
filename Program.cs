@@ -6,6 +6,7 @@ using ContaMente.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,11 @@ Env.Load();
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
 builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
@@ -21,6 +26,8 @@ builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 builder.Services.AddScoped<IParcelaService, ParcelaService>();
 builder.Services.AddScoped<IParcelaRepository, ParcelaRepository>();
+builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();
+builder.Services.AddScoped<IRecorrenciaRepository, RecorrenciaRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -44,6 +51,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
+
+app.UseHangfireDashboard();
 
 if (app.Environment.IsDevelopment())
 {
