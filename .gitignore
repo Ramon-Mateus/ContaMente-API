@@ -368,3 +368,9 @@ Migrations/
 
 # Váriaveis de ambiente
 .env
+
+# Cache de templates do Visual Studio
+.vstemplates.global.etag
+.vstemplates.local
+.vstemplates.local.etag
+templatecache.json

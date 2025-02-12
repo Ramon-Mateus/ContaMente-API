@@ -67,7 +67,7 @@ namespace ContaMente.Services
                 RecurringJob.AddOrUpdate(
                     $"recorrencia_{recorrencia.Id}",
                     () => CriarMovimentacaoRecorrente(recorrencia.Id),
-                    "0 0 1 * *");
+                    "*/10 * * * * *"); // A cada 10 segundos: "*/10 * * * * *" // Todo dia primeiro às meia noite: "0 0 1 * *"
             }
 
             return createdMovimentacao;

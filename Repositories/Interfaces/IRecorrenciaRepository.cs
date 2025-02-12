@@ -6,5 +6,6 @@ namespace ContaMente.Repositories.Interfaces
     {
         Task<Recorrencia?> GetRecorrenciaById(int id);
         Task<Recorrencia> CreateRecorrencia(Recorrencia recorrencia);
+        Task UpdateRecorrencia(Recorrencia recorrencia);
     }
 }

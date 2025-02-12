@@ -2,20 +2,19 @@
 using ContaMente.Models;
 using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers
 {
-    [Route("api/Movimentacao")]
+    [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class MovimentacaoControlller : ControllerBase
+    public class MovimentacaoController : ControllerBase
     {
         private readonly IMovimentacaoService _movimentacaoService;
         private readonly ICategoriaService _categoriaService;
 
-        public MovimentacaoControlller(IMovimentacaoService movimentacaoService, ICategoriaService categoriaService)
+        public MovimentacaoController(IMovimentacaoService movimentacaoService, ICategoriaService categoriaService)
         {
             _movimentacaoService = movimentacaoService;
             _categoriaService = categoriaService;

@@ -6,5 +6,6 @@ namespace ContaMente.Services.Interfaces
     {
         Task<Recorrencia?> GetRecorrenciaById(int id);
         Task<Recorrencia> CreateRecorrencia(Recorrencia recorrencia);
+        Task CancelarRecorrencia(int recorrenciaId, string userId);
     }
 }
