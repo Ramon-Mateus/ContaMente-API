@@ -26,6 +26,7 @@ public class CategoriaService : ICategoriaService
             var categoria = new Categoria
             {
                 Nome = createCategoriaDto.Nome,
+                Entrada = createCategoriaDto.Entrada,
                 UserId = userId
             };
 
