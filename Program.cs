@@ -28,6 +28,8 @@ builder.Services.AddScoped<IParcelaService, ParcelaService>();
 builder.Services.AddScoped<IParcelaRepository, ParcelaRepository>();
 builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();
 builder.Services.AddScoped<IRecorrenciaRepository, RecorrenciaRepository>();
+builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
+builder.Services.AddScoped<ITipoPagamentoRepository, TipoPagamentoRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
