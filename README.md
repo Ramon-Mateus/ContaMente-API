@@ -70,22 +70,16 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 dotnet tool install --global dotnet-ef
 ```
 
-_Após instalar os itens listados acima, vamos baixar a imagem docker do SQL Server e subir o container com a imagem baixada._
-
 ## Docker
-- Baixar a imagem do MSSQL:
+
+- Subir o container do Postgres:
 ```shell
-docker pull mcr.microsoft.com/mssql/server
+docker run --name postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=SenhaForte123# -p 5432:5432 -d postgres
 ```
 
-- Subir o container do MSSQL:
+- Se já criou o container anteriormente, para subir novamente basta rodar esse comando:
 ```shell
-docker run --name sqlserver -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=SenhaForte123#" -p 1433:1433 -d mcr.microsoft.com/mssql/server
-```
-
-- Rodar o container:
-```shell
-docker start sqlserver
+docker start postgres
 ```
 
 - Para verificar se o container subiu e rodou corretamente execute o comando abaixo no terminal e veja se o status está UP:

@@ -34,7 +34,7 @@ namespace ContaMente.Services
 
                 if (pertenceAoUsuario)
                 {
-                    recorrencia.DataFim = DateTime.Now;
+                    recorrencia.DataFim = DateTime.UtcNow;
                     await _recorrenciaRepository.UpdateRecorrencia(recorrencia);
 
                     RecurringJob.RemoveIfExists($"recorrencia_{recorrencia.Id}");

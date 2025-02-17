@@ -1,4 +1,5 @@
 ﻿using ContaMente.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +7,7 @@ namespace ContaMente.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RecorrenciaController : ControllerBase
     {
         private readonly IRecorrenciaService _recorrenciaService;

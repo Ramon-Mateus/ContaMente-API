@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
 using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +15,13 @@ Env.Load();
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 
-builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+builder.Services.AddHangfire(config =>
+config.UsePostgreSqlStorage(c =>
+        c.UseNpgsqlConnection(connectionString)));
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
 builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
