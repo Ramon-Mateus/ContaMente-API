@@ -5,7 +5,7 @@ namespace ContaMente.Services.Interfaces
 {
     public interface ICategoriaService
     {
-        Task<List<Categoria>> GetCategorias(string userId);
+        Task<List<Categoria>> GetCategorias(string userId, bool entrada);
         Task<Categoria?> GetCategoriaById(int id, string userId);
         Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto, string userId);
         Task<Categoria?> UpdateCategoria(int id, UpdateCategoriaDto updateCategoriaDto, string userId);

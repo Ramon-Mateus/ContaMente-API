@@ -8,8 +8,11 @@ namespace ContaMente.Contexts
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         { }
-        public DbSet<Gasto> Gastos => Set<Gasto>();
+        public DbSet<Movimentacao> Movimentacoes => Set<Movimentacao>();
         public DbSet<Categoria> Categorias => Set<Categoria>();
+        public DbSet<Parcela> Parcelas => Set<Parcela>();
+        public DbSet<Recorrencia> Recorrencias => Set<Recorrencia>();
+        public DbSet<TipoPagamento> TiposPagamento => Set<TipoPagamento>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,9 +24,9 @@ namespace ContaMente.Contexts
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Gasto>()
+            modelBuilder.Entity<Movimentacao>()
                 .HasOne(g => g.Categoria)
-                .WithMany(c => c.Gastos)
+                .WithMany(c => c.Movimentacoes)
                 .HasForeignKey(g => g.CategoriaId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

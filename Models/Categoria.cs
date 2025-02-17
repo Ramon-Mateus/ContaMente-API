@@ -7,9 +7,10 @@ namespace ContaMente.Models
     {
         public int Id { get; set; }
         public string Nome { get; set; } = string.Empty;
+        public bool Entrada { get; set; }
         [JsonIgnore]
         public string UserId { get; set; } = string.Empty;
         public IdentityUser User { get; set; } = null!;
-        public List<Gasto> Gastos { get; set; } = new List<Gasto>();
+        public List<Movimentacao> Movimentacoes { get; set; } = new List<Movimentacao>();
     }
 }

@@ -9,27 +9,27 @@ namespace ContaMente.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class GastoController : ControllerBase
+    public class MovimentacaoController : ControllerBase
     {
-        private readonly IGastoService _gastoService;
+        private readonly IMovimentacaoService _movimentacaoService;
         private readonly ICategoriaService _categoriaService;
 
-        public GastoController(IGastoService gastoService, ICategoriaService categoriaService)
+        public MovimentacaoController(IMovimentacaoService movimentacaoService, ICategoriaService categoriaService)
         {
-            _gastoService = gastoService;
+            _movimentacaoService = movimentacaoService;
             _categoriaService = categoriaService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetGastos([FromQuery] int? mes, [FromQuery] int? ano)
+        public async Task<IActionResult> GetMovimentacoes([FromQuery] int? mes, [FromQuery] int? ano, [FromQuery] bool entrada)
         {
             if (mes < 1 || mes > 12)
                 return BadRequest("O mês deve estar entre 1 e 12.");
 
             if (ano < 1)
                 return BadRequest("Ano inválido.");
-            
-            if(!mes.HasValue || !ano.HasValue)
+
+            if (!mes.HasValue || !ano.HasValue)
                 return BadRequest("Mês ou ano não especificado.");
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -39,13 +39,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var gastos = await _gastoService.GetGastos(mes, ano, userId);
+            var movimentacoes = await _movimentacaoService.GetMovimentacoes(mes, ano, userId, entrada);
 
-            return Ok(gastos);
+            return Ok(movimentacoes);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetGastoById(int id)
+        public async Task<IActionResult> GetMovimentacaoById(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -54,18 +54,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var gasto = await _gastoService.GetGastoById(id, userId);
+            var movimentacao = await _movimentacaoService.GetMovimentacaoById(id, userId);
 
-            if (gasto == null)
+            if (movimentacao == null)
             {
                 return NotFound();
             }
-            
-            return Ok(gasto);
+
+            return Ok(movimentacao);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Gasto>> CreateGasto([FromBody] CreateGastoDto createGastoDto)
+        public async Task<ActionResult<Movimentacao>> CreateMovimentacao([FromBody] CreateMovimentacaoDto createMovimentacaoDto)
         {
             if (!ModelState.IsValid)
             {
@@ -79,20 +79,20 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categoria = await _categoriaService.GetCategoriaById(createGastoDto.CategoriaId, userId);
+            var categoria = await _categoriaService.GetCategoriaById(createMovimentacaoDto.CategoriaId, userId);
 
-            if(categoria == null)
+            if (categoria == null)
             {
                 return BadRequest("Categoria não encontrada ou não pertence ao usuário.");
             }
 
-            var gasto = await _gastoService.CreateGasto(createGastoDto);
+            var movimentacao = await _movimentacaoService.CreateMovimentacao(createMovimentacaoDto);
 
-            return CreatedAtAction(nameof(GetGastoById), new { id = gasto.Id }, gasto);
+            return CreatedAtAction(nameof(GetMovimentacaoById), new { id = movimentacao.Id }, movimentacao);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateGasto(int id, [FromBody] UpdateGastoDto updateGastoDto)
+        public async Task<IActionResult> UpdateMovimentacao(int id, [FromBody] UpdateMovimentacaoDto updateMovimentacaoDto)
         {
             if (!ModelState.IsValid)
             {
@@ -106,18 +106,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var gasto = await _gastoService.UpdateGasto(id, updateGastoDto, userId);
+            var movimentacao = await _movimentacaoService.UpdateMovimentacao(id, updateMovimentacaoDto, userId);
 
-            if (gasto == null)
+            if (movimentacao == null)
             {
                 return NotFound("Gasto não encontrado ou não pertence ao usuário.");
             }
 
-            return Ok(gasto);
+            return Ok(movimentacao);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGasto(int id)
+        public async Task<IActionResult> DeleteMovimentacao(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -126,13 +126,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var result = await _gastoService.DeleteGasto(id, userId);
+            var result = await _movimentacaoService.DeleteMovimentacao(id, userId);
 
             if (!result)
             {
                 return NotFound();
             }
-            
+
             return NoContent();
         }
     }

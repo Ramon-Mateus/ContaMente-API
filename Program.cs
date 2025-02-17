@@ -6,6 +6,8 @@ using ContaMente.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +15,24 @@ Env.Load();
 
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+builder.Services.AddHangfire(config =>
+config.UsePostgreSqlStorage(c =>
+        c.UseNpgsqlConnection(connectionString)));
+
+builder.Services.AddHangfireServer();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
-builder.Services.AddScoped<IGastoService, GastoService>();
-builder.Services.AddScoped<IGastoRepository, GastoRepository>();
+builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
+builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<IParcelaService, ParcelaService>();
+builder.Services.AddScoped<IParcelaRepository, ParcelaRepository>();
+builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();
+builder.Services.AddScoped<IRecorrenciaRepository, RecorrenciaRepository>();
+builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
+builder.Services.AddScoped<ITipoPagamentoRepository, TipoPagamentoRepository>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -42,6 +56,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
+
+app.UseHangfireDashboard();
 
 if (app.Environment.IsDevelopment())
 {

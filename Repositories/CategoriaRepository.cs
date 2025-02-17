@@ -11,11 +11,11 @@ public class CategoriaRepository : ICategoriaRepository
     
             public CategoriaRepository(ApplicationDbContext context) => _context = context;
             
-            public async Task<List<Categoria>> GetCategorias(string userId)
+            public async Task<List<Categoria>> GetCategorias(string userId, bool entrada)
             {
                 return await _context.Categorias
-                    .Include(c => c.Gastos)
-                    .Where(c => c.UserId == userId)
+                    .Include(c => c.Movimentacoes)
+                    .Where(c => c.UserId == userId && c.Entrada == entrada)
                     .ToListAsync();
             }
             

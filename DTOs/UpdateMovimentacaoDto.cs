@@ -1,13 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace ContaMente.DTOs
+﻿namespace ContaMente.DTOs
 {
-    public class UpdateGastoDto
+    public class UpdateMovimentacaoDto
     {
         public double? Valor { get; set; }
         public DateTime? Data { get; set; }
-        [MaxLength(100)]
         public string? Descricao { get; set; } = string.Empty;
+        public bool? Fixa { get; set; }
         public int? CategoriaId { get; set; }
+        public int? TipoPagamentoId { get; set; }
     }
 }

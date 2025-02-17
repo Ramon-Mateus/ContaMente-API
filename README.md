@@ -13,22 +13,54 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 ```mermaid
   classDiagram
     direction LR
-    Gasto "*"--"1" Categoria
+    Movimentacao "*"--"1" Categoria
+    Movimentacao "*"--"1" TipoPagamento
+    Movimentacao "*"--"1" Parcela
+    Movimentacao "*"--"1" Recorrencia
 
-    class Gasto
-    Gasto : int Id
-    Gasto : double Valor
-    Gasto : DateTime Data
-    Gasto : string? Descricao
-    Gasto : int CategoriaId
-    Gasto :  Categoria? Categoria
+    class Movimentacao
+    Movimentacao : int Id
+    Movimentacao : double Valor
+    Movimentacao : DateTime Data
+    Movimentacao : string? Descricao
+    Movimentacao : bool Fixa
+    Movimentacao : int? NumeroParcela
+    Movimentacao : int CategoriaId
+    Movimentacao :  Categoria? Categoria
+    Movimentacao : int TipoPagamentoId
+    Movimentacao :  TipoPagamento? TipoPagamento
+    Movimentacao : int? RecorrenciaId
+    Movimentacao :  Recorrencia? Recorrencia
+    Movimentacao : int? ParcelaId
+    Movimentacao :  Parcela? Parcela
 
     class Categoria
     Categoria : int Id
     Categoria : string Nome
     Categoria : string UserId
+    Categoria : bool Entrada
     Categoria : IdentityUser User
-    Categoria : List<Gasto> Gastos
+    Categoria : List<Movimentacao> Movimentacoes
+
+    class TipoPagamento
+    TipoPagamento : int Id
+    TipoPagamento : string Nome
+    TipoPagamento : List<Movimentacao> Movimentacoes
+
+    class Parcela
+    Parcela : int Id
+    Parcela : double ValorTotal
+    Parcela : int NumeroParcelas
+    Parcela : double ValorParcela
+    Parcela : DateTime DataInicio
+    Parcela : DateTime? DataFim
+    Parcela : List<Movimentacao> Movimentacoes
+
+    class Recorrencia
+    Recorrencia : int Id
+    Recorrencia : DateTime DataInicio
+    Recorrencia : DateTime DataFim
+    Recorrencia : List<Movimentacao> Movimentacoes
 ```
 
 # Instalar
@@ -38,22 +70,16 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 dotnet tool install --global dotnet-ef
 ```
 
-_Após instalar os itens listados acima, vamos baixar a imagem docker do SQL Server e subir o container com a imagem baixada._
-
 ## Docker
-- Baixar a imagem do MSSQL:
+
+- Subir o container do Postgres:
 ```shell
-docker pull mcr.microsoft.com/mssql/server
+docker run --name postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=SenhaForte123# -p 5432:5432 -d postgres
 ```
 
-- Subir o container do MSSQL:
+- Se já criou o container anteriormente, para subir novamente basta rodar esse comando:
 ```shell
-docker run --name sqlserver -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=SenhaForte123#" -p 1433:1433 -d mcr.microsoft.com/mssql/server
-```
-
-- Rodar o container:
-```shell
-docker start sqlserver
+docker start postgres
 ```
 
 - Para verificar se o container subiu e rodou corretamente execute o comando abaixo no terminal e veja se o status está UP:

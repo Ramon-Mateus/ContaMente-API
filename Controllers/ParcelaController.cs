@@ -2,6 +2,7 @@
 using ContaMente.Models;
 using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers
@@ -9,14 +10,17 @@ namespace ContaMente.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class CategoriaController : ControllerBase
+    public class ParcelaController : ControllerBase
     {
-        private readonly ICategoriaService _categoriaService;
+        private readonly IParcelaService _parcelaService;
 
-        public CategoriaController(ICategoriaService categoriaService) => _categoriaService = categoriaService;
+        public ParcelaController(IParcelaService parcelaService)
+        {
+            _parcelaService = parcelaService;
+        }
 
         [HttpGet]
-        public async Task<IActionResult> GetCategorias([FromQuery] bool entrada)
+        public async Task<ActionResult<List<Parcela>>> GetParcelas()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -25,13 +29,11 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categorias = await _categoriaService.GetCategorias(userId, entrada);
-
-            return Ok(categorias);
+            return await _parcelaService.GetParcelas(userId);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetCategoriaById(int id)
+        public async Task<ActionResult<Parcela>> GetParcelaById(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -40,18 +42,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categoria = await _categoriaService.GetCategoriaById(id, userId);
+            var parcela = await _parcelaService.GetParcelaById(id, userId);
 
-            if (categoria == null)
+            if (parcela == null)
             {
                 return NotFound();
             }
 
-            return Ok(categoria);
+            return Ok(parcela);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Categoria>> CreateCategoria([FromBody] CreateCategoriaDto createCategoriaDto)
+        public async Task<ActionResult<Parcela>> CreateParcela([FromBody] CreateParcelaDto createParcelaDto)
         {
             if (!ModelState.IsValid)
             {
@@ -65,13 +67,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto, userId);
+            var parcela = await _parcelaService.CreateParcela(createParcelaDto);
 
-            return CreatedAtAction(nameof(GetCategoriaById), new { id = categoria.Id }, categoria);
+            return CreatedAtAction(nameof(GetParcelaById), new { id = parcela.Id }, parcela);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategoria(int id, [FromBody] UpdateCategoriaDto updateCategoriaDto)
+        public async Task<ActionResult<Parcela>> UpdateParcela(int id, [FromBody] CreateParcelaDto createParcelaDto)
         {
             if (!ModelState.IsValid)
             {
@@ -85,18 +87,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto, userId);
+            var parcela = await _parcelaService.UpdateParcela(id, createParcelaDto, userId);
 
-            if (categoria == null)
+            if (parcela == null)
             {
                 return NotFound();
             }
-            
-            return Ok(categoria);
+
+            return Ok(parcela);
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategoria(int id)
+        [HttpDelete]
+        public async Task<ActionResult> DeleteParcela(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -105,14 +107,14 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var result = await _categoriaService.DeleteCategoria(id, userId);
+            var result = await _parcelaService.DeleteParcela(id, userId);
 
             if (!result)
             {
                 return NotFound();
             }
 
-            return NoContent();
+            return Ok();
         }
     }
 }

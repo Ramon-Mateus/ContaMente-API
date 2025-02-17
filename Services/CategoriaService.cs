@@ -11,9 +11,9 @@ public class CategoriaService : ICategoriaService
 
         public CategoriaService(ICategoriaRepository categoriaRepository) => _categoriaRepository = categoriaRepository;
         
-        public async Task<List<Categoria>> GetCategorias(string userId)
+        public async Task<List<Categoria>> GetCategorias(string userId, bool entrada)
         {
-            return await _categoriaRepository.GetCategorias(userId);
+            return await _categoriaRepository.GetCategorias(userId, entrada);
         }
         
         public async Task<Categoria?> GetCategoriaById(int id, string userId)
@@ -26,6 +26,7 @@ public class CategoriaService : ICategoriaService
             var categoria = new Categoria
             {
                 Nome = createCategoriaDto.Nome,
+                Entrada = createCategoriaDto.Entrada,
                 UserId = userId
             };
 
