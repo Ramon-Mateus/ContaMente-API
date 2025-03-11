@@ -17,7 +17,7 @@ namespace ContaMente.Services
             _recorrenciaService = recorrenciaService;
         }
 
-        public async Task<List<Movimentacao>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada)
+        public async Task<Dictionary<DateTime, List<Movimentacao>>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada)
         {
             var query = _movimentacaoRepository.GetMovimentacoes(userId);
 
@@ -29,9 +29,15 @@ namespace ContaMente.Services
 
             query = query.Where(m => m.Categoria!.Entrada == entrada);
 
-            return await query
-                .OrderByDescending(g => g.Data)
+            var movimentacoes = await query
+                .OrderByDescending(m => m.Data)
                 .ToListAsync();
+
+            var movimentacoesPorDia = movimentacoes
+                .GroupBy(m => m.Data.Date)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            return movimentacoesPorDia;
         }
 
         public async Task<Movimentacao?> GetMovimentacaoById(int id, string userId)
