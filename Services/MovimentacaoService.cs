@@ -40,7 +40,7 @@ namespace ContaMente.Services
                 .ToListAsync();
 
             var movimentacoesPorDia = movimentacoes
-                .GroupBy(m => m.Data.Date)
+                .GroupBy(m => m.Data.Date.AddDays(1))
                 .ToDictionary(g => g.Key, g => g.ToList());
 
             return movimentacoesPorDia;
