@@ -36,7 +36,7 @@ namespace ContaMente.Services
                 ValorTotal = createParcelaDto.ValorTotal,
                 ValorParcela = createParcelaDto.ValorParcela,
                 NumeroParcelas = createParcelaDto.NumeroParcelas,
-                DataInicio = createParcelaDto.DataInicio
+                DataInicio = createParcelaDto.DataInicio.ToUniversalTime()
             };
 
             var parcelaCriada = await _parcelaRepository.CreateParcela(parcela);
@@ -49,7 +49,7 @@ namespace ContaMente.Services
                 {
                     Valor = parcelaCriada.ValorParcela,
                     Descricao = createParcelaDto.Descricao,
-                    Data = dataParcela,
+                    Data = dataParcela.ToUniversalTime(),
                     Fixa = false,
                     CategoriaId = createParcelaDto.CategoriaId,
                     TipoPagamentoId = createParcelaDto.TipoPagamentoId,
