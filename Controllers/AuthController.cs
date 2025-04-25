@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ContaMente.DTOs;
+using ContaMente.Models;
 using ContaMente.Services.Interfaces;
 
 namespace ContaMente.Controllers
@@ -9,13 +10,13 @@ namespace ContaMente.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly SignInManager<User> _signInManager;
 
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<User> _userManager;
 
         private readonly IEmailService _emailService;
 
-        public AuthController(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager, IEmailService emailService)
+        public AuthController(SignInManager<User> signInManager, UserManager<User> userManager, IEmailService emailService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -78,6 +79,37 @@ namespace ContaMente.Controllers
                 return BadRequest(result.Errors);
 
             return Ok(new { message = "Senha redefinida com sucesso." });
+        }
+        
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            
+            var user = new User
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                Name = model.Name
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                UserId = user.Id,
+                Name = user.Name,
+                Email = user.Email
+            });
         }
     }
 }
