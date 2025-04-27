@@ -10,7 +10,7 @@ namespace ContaMente.Models
         public bool Entrada { get; set; }
         [JsonIgnore]
         public string UserId { get; set; } = string.Empty;
-        public IdentityUser User { get; set; } = null!;
+        public User User { get; set; } = null!;
         public List<Movimentacao> Movimentacoes { get; set; } = new List<Movimentacao>();
     }
 }
