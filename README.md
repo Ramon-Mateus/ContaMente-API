@@ -33,9 +33,10 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
     Movimentacao :  Recorrencia? Recorrencia
     Movimentacao : int? ParcelaId
     Movimentacao :  Parcela? Parcela
-
-    class Categoria
-    Categoria : int Id
+- Subir o container do Postgres:
+```shell
+docker run --name postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=SenhaForte123# -p 5432:5432 -d postgres
+```
     Categoria : string Nome
     Categoria : string UserId
     Categoria : bool Entrada
@@ -67,7 +68,7 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
 - .Net 8+: [Aqui](https://dotnet.microsoft.com/pt-br/download)
 - Execute esse comando para baixar a ferramenta do Entity Framework para gerenciar migrations e updates no banco:
 ```shell
-dotnet tool install --global dotnet-ef
+dotnet tool install dotnet-ef
 ```
 
 ## Docker
