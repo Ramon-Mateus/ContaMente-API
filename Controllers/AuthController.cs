@@ -111,5 +111,30 @@ namespace ContaMente.Controllers
                 Email = user.Email
             });
         }
+
+        [HttpGet("getUser")]
+        public async Task<IActionResult> getUser()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("Usuário não encontrado.");
+            }
+
+            return Ok(new
+            {
+                user.Id,
+                user.Name,
+                user.Email
+            });
+        }
     }
 }

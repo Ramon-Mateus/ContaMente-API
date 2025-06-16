@@ -46,8 +46,16 @@ public class CategoriaService : ICategoriaService
         {
             return null;
         }
-            
-        categoria.Nome = updateCategoriaDto.Nome;
+
+        if (!string.IsNullOrEmpty(updateCategoriaDto.Nome))
+        {
+            categoria.Nome = updateCategoriaDto.Nome;
+        }
+
+        if(updateCategoriaDto.Entrada.HasValue)
+        {
+            categoria.Entrada = updateCategoriaDto.Entrada.Value;
+        }
 
         return await _categoriaRepository.UpdateCategoria(categoria);
     }
