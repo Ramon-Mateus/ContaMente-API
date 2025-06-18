@@ -16,6 +16,7 @@ public class CategoriaRepository : ICategoriaRepository
                 return await _context.Categorias
                     .Include(c => c.Movimentacoes)
                     .Where(c => c.UserId == userId && c.Entrada == entrada)
+                    .OrderBy(c => c.Nome)
                     .ToListAsync();
             }
             
