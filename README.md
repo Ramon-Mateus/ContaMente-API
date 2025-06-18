@@ -33,10 +33,8 @@ API do Projeto de gerenciamento de finanças pessoais. ([Front-end](https://gith
     Movimentacao :  Recorrencia? Recorrencia
     Movimentacao : int? ParcelaId
     Movimentacao :  Parcela? Parcela
-- Subir o container do Postgres:
-```shell
-docker run --name postgres -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=SenhaForte123# -p 5432:5432 -d postgres
-```
+
+    class Categoria
     Categoria : string Nome
     Categoria : string UserId
     Categoria : bool Entrada
