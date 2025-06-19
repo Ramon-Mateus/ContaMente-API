@@ -14,6 +14,8 @@ namespace ContaMente.Models
         public int CategoriaId { get; set; }
         [JsonIgnore]
         public int TipoPagamentoId { get; set; }
+        public int? ResponsavelId { get; set; }
+        public Responsavel? Responsavel { get; set; }
         public Categoria? Categoria { get; set; }
         public TipoPagamento? TipoPagamento { get; set; }
         [JsonIgnore]

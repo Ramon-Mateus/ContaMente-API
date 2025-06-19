@@ -13,6 +13,7 @@ namespace ContaMente.Contexts
         public DbSet<Parcela> Parcelas => Set<Parcela>();
         public DbSet<Recorrencia> Recorrencias => Set<Recorrencia>();
         public DbSet<TipoPagamento> TiposPagamento => Set<TipoPagamento>();
+        public DbSet<Responsavel> Responsaveis => Set<Responsavel>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,6 +24,13 @@ namespace ContaMente.Contexts
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Responsavel>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             modelBuilder.Entity<Movimentacao>()
                 .HasOne(g => g.Categoria)
