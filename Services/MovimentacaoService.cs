@@ -61,7 +61,8 @@ namespace ContaMente.Services
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
-                ParcelaId = createMovimentacaoDto.ParcelaId
+                ParcelaId = createMovimentacaoDto.ParcelaId,
+                ResponsavelId = createMovimentacaoDto.ResponsavelId
             };
 
             var createdMovimentacao = await _movimentacaoRepository.CreateMovimentacao(movimentacao);
