@@ -28,6 +28,8 @@ builder.Services.AddScoped<IMovimentacaoService, MovimentacaoService>();
 builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
+builder.Services.AddScoped<IResponsavelService, ResponsavelService>();
+builder.Services.AddScoped<IResponsavelRepository, ResponsavelRepository>();
 builder.Services.AddScoped<IParcelaService, ParcelaService>();
 builder.Services.AddScoped<IParcelaRepository, ParcelaRepository>();
 builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();

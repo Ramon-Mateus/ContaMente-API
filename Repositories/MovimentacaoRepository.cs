@@ -19,6 +19,7 @@ namespace ContaMente.Repositories
                 .Include(m => m.TipoPagamento)
                 .Include(m => m.Recorrencia)
                 .Include(m => m.Parcela)
+                .Include(m => m.Responsavel)
                 .Where(m => m.Categoria!.UserId == userId);
         }
 
@@ -29,6 +30,7 @@ namespace ContaMente.Repositories
                 .Include(m => m.TipoPagamento)
                 .Include(m => m.Recorrencia)
                 .Include(m => m.Parcela)
+                .Include(m => m.Responsavel)
                 .FirstOrDefaultAsync(g => g.Id == id && g.Categoria!.UserId == userId);
         }
 

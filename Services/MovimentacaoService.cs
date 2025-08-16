@@ -17,7 +17,14 @@ namespace ContaMente.Services
             _recorrenciaService = recorrenciaService;
         }
 
-        public async Task<Dictionary<DateTime, List<Movimentacao>>> GetMovimentacoes(int? mes, int? ano, string userId, bool entrada, List<int> categoriasIds, List<int> tiposPagamentoIds)
+        public async Task<Dictionary<DateTime, List<Movimentacao>>> GetMovimentacoes(
+            int? mes,
+            int? ano,
+            string userId,
+            bool entrada,
+            List<int> categoriasIds,
+            List<int> tiposPagamentoIds,
+            List<int> responsaveisIds)
         {
             var query = _movimentacaoRepository.GetMovimentacoes(userId);
 
@@ -29,11 +36,14 @@ namespace ContaMente.Services
 
             query = query.Where(m => m.Categoria!.Entrada == entrada);
 
-            if (categoriasIds.Any())
+            if (categoriasIds.Count != 0)
                 query = query.Where(m => categoriasIds.Contains(m.CategoriaId));
 
-            if (tiposPagamentoIds.Any())
+            if (tiposPagamentoIds.Count != 0)
                 query = query.Where(m => tiposPagamentoIds.Contains(m.TipoPagamentoId));
+
+            if (responsaveisIds.Count != 0)
+                query = query.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
 
             var movimentacoes = await query
                 .OrderByDescending(m => m.Data)
@@ -61,7 +71,8 @@ namespace ContaMente.Services
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
-                ParcelaId = createMovimentacaoDto.ParcelaId
+                ParcelaId = createMovimentacaoDto.ParcelaId,
+                ResponsavelId = createMovimentacaoDto.ResponsavelId
             };
 
             var createdMovimentacao = await _movimentacaoRepository.CreateMovimentacao(movimentacao);
@@ -101,7 +112,8 @@ namespace ContaMente.Services
                     Fixa = true,
                     CategoriaId = movimentacaoOriginal.CategoriaId,
                     TipoPagamentoId = movimentacaoOriginal.TipoPagamentoId,
-                    RecorrenciaId = recorrencia.Id
+                    RecorrenciaId = recorrencia.Id,
+                    ResponsavelId = movimentacaoOriginal.ResponsavelId
                 };
 
                 await _movimentacaoRepository.CreateMovimentacao(novaMovimentacao);
@@ -140,6 +152,11 @@ namespace ContaMente.Services
             if (updateMovimentacaoDto.TipoPagamentoId.HasValue)
             {
                 movimentacao.TipoPagamentoId = updateMovimentacaoDto.TipoPagamentoId.Value;
+            }
+
+            if (updateMovimentacaoDto.ResponsavelId.HasValue)
+            {
+                movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId.Value;
             }
 
             return await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
