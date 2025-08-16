@@ -13,10 +13,12 @@ namespace ContaMente.Controllers
     public class ParcelaController : ControllerBase
     {
         private readonly IParcelaService _parcelaService;
+        private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
 
-        public ParcelaController(IParcelaService parcelaService)
+        public ParcelaController(IParcelaService parcelaService, IMovimentacaoParcelaService movimentacaoParcelaService)
         {
             _parcelaService = parcelaService;
+            _movimentacaoParcelaService = movimentacaoParcelaService;
         }
 
         [HttpGet]
@@ -107,7 +109,7 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var result = await _parcelaService.DeleteParcela(id, userId);
+            var result = await _movimentacaoParcelaService.DeleteParcela(id, userId);
 
             if (!result)
             {

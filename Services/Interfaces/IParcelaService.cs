@@ -9,6 +9,5 @@ namespace ContaMente.Services.Interfaces
         Task<Parcela?> GetParcelaById(int id, string userId);
         Task<Parcela> CreateParcela(CreateParcelaDto createParcelaDto);
         Task<Parcela?> UpdateParcela(int id, CreateParcelaDto createParcelaDto, string userId);
-        Task<bool> DeleteParcela(int id, string userId);
     }
 }

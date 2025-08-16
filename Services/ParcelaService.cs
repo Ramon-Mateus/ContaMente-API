@@ -1,10 +1,7 @@
 ﻿using ContaMente.DTOs;
 using ContaMente.Models;
-using ContaMente.Repositories;
 using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-using System.Runtime.CompilerServices;
 
 namespace ContaMente.Services
 {
@@ -12,11 +9,13 @@ namespace ContaMente.Services
     {
         private readonly IParcelaRepository _parcelaRepository;
         private readonly IMovimentacaoService _movimentacaoService;
+        private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
 
-        public ParcelaService(IParcelaRepository parcelaRepository, IMovimentacaoService movimentacaoService)
+        public ParcelaService(IParcelaRepository parcelaRepository, IMovimentacaoService movimentacaoService, IMovimentacaoParcelaService movimentacaoParcelaService)
         {
             _parcelaRepository = parcelaRepository;
             _movimentacaoService = movimentacaoService;
+            _movimentacaoParcelaService = movimentacaoParcelaService;
         }
 
         public Task<List<Parcela>> GetParcelas(string userId)
@@ -72,21 +71,9 @@ namespace ContaMente.Services
                 return null;
             }
 
-            await this.DeleteParcela(id, userId);
+            await _movimentacaoParcelaService.DeleteParcela(id, userId);
 
             return await this.CreateParcela(createParcelaDto);
-        }
-
-        public async Task<bool> DeleteParcela(int id, string userId)
-        {
-            var parcela = await this.GetParcelaById(id, userId);
-
-            if (parcela == null)
-            {
-                return false;
-            }
-
-            return await _parcelaRepository.DeleteParcela(parcela);
         }
     }
 }

@@ -11,10 +11,12 @@ namespace ContaMente.Services
     {
         private readonly IMovimentacaoRepository _movimentacaoRepository;
         private readonly IRecorrenciaService _recorrenciaService;
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IRecorrenciaService recorrenciaService)
+        private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
+        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IRecorrenciaService recorrenciaService, IMovimentacaoParcelaService movimentacaoParcelaService)
         {
             _movimentacaoRepository = movimentacaoRepository;
             _recorrenciaService = recorrenciaService;
+            _movimentacaoParcelaService = movimentacaoParcelaService;
         }
 
         public async Task<Dictionary<DateTime, List<Movimentacao>>> GetMovimentacoes(
@@ -169,6 +171,11 @@ namespace ContaMente.Services
             if (movimentacao == null)
             {
                 return false;
+            }
+
+            if (movimentacao.Parcela != null)
+            {
+                return await _movimentacaoParcelaService.DeleteParcela(movimentacao.Parcela.Id, userId);
             }
 
             return await _movimentacaoRepository.DeleteMovimentacao(movimentacao);
