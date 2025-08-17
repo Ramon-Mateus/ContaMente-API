@@ -53,6 +53,7 @@ namespace ContaMente.Services
                     CategoriaId = createParcelaDto.CategoriaId,
                     TipoPagamentoId = createParcelaDto.TipoPagamentoId,
                     ParcelaId = parcelaCriada.Id,
+                    ResponsavelId = createParcelaDto.ResponsavelId,
                     NumeroParcela = i + 1
                 };
 

@@ -9,5 +9,6 @@
         public DateTime DataInicio { get; set; }
         public int CategoriaId { get; set; }
         public int TipoPagamentoId { get; set; }
+        public int ResponsavelId { get; set; }
     }
 }
