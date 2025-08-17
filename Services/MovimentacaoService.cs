@@ -156,10 +156,7 @@ namespace ContaMente.Services
                 movimentacao.TipoPagamentoId = updateMovimentacaoDto.TipoPagamentoId.Value;
             }
 
-            if (updateMovimentacaoDto.ResponsavelId.HasValue)
-            {
-                movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId.Value;
-            }
+            movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId;
 
             return await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
         }
