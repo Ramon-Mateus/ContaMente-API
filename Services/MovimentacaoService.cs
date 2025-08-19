@@ -74,6 +74,7 @@ namespace ContaMente.Services
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
                 ParcelaId = createMovimentacaoDto.ParcelaId,
+                NumeroParcela = createMovimentacaoDto.NumeroParcela,
                 ResponsavelId = createMovimentacaoDto.ResponsavelId
             };
 
