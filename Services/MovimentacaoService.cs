@@ -44,8 +44,27 @@ namespace ContaMente.Services
             if (tiposPagamentoIds.Count != 0)
                 query = query.Where(m => tiposPagamentoIds.Contains(m.TipoPagamentoId));
 
-            if (responsaveisIds.Count != 0)
+            //Filtros de responsáveis
+            bool filtrarPorNulo = responsaveisIds.Contains(0);
+            var outrosResponsaveisIds = responsaveisIds.Where(id => id != 0).ToList();
+
+            if (filtrarPorNulo && outrosResponsaveisIds.Count > 0)
+            {
+                query = query.Where(m => m.ResponsavelId == null ||
+                                    (m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value)));
+            }
+            else if (filtrarPorNulo)
+            {
+                query = query.Where(m => m.ResponsavelId == null);
+            }
+            else if (outrosResponsaveisIds.Count > 0)
+            {
+                query = query.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
+            }
+            else if (responsaveisIds.Count > 0)
+            {
                 query = query.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
+            }
 
             var movimentacoes = await query
                 .OrderByDescending(m => m.Data)
