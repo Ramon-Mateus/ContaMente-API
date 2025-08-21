@@ -16,7 +16,6 @@ namespace ContaMente.Repositories
         {
             return _context.Movimentacoes
                 .Include(m => m.Categoria)
-                .Include(m => m.TipoPagamento)
                 .Include(m => m.Recorrencia)
                 .Include(m => m.Parcela)
                 .Include(m => m.Responsavel)
@@ -27,7 +26,6 @@ namespace ContaMente.Repositories
         {
             return await _context.Movimentacoes
                 .Include(m => m.Categoria)
-                .Include(m => m.TipoPagamento)
                 .Include(m => m.Recorrencia)
                 .Include(m => m.Parcela)
                 .Include(m => m.Responsavel)

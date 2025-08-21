@@ -14,7 +14,7 @@ namespace ContaMente.Controllers
         public TipoPagamentoController(ITipoPagamentoService tipoPagamentoService) => _tipoPagamentoService = tipoPagamentoService;
         
         [HttpGet]
-        public async Task<ActionResult<List<TipoPagamento>>> GetTiposPagamento()
+        public ActionResult<List<TipoPagamentoEnum>> GetTiposPagamento()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -23,13 +23,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var tiposPagamento = await _tipoPagamentoService.GetTiposPagamento();
+            var tiposPagamento = _tipoPagamentoService.GetTiposPagamento();
 
             return Ok(tiposPagamento);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TipoPagamento>> GetTipoPagamentoById(int id)
+        public ActionResult<TipoPagamentoEnum> GetTipoPagamentoById(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -38,7 +38,7 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var tipoPagamento = await _tipoPagamentoService.GetTipoPagamentoById(id);
+            var tipoPagamento = _tipoPagamentoService.GetTipoPagamentoById(id);
 
             if (tipoPagamento == null)
             {

@@ -35,7 +35,6 @@ builder.Services.AddScoped<IParcelaRepository, ParcelaRepository>();
 builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();
 builder.Services.AddScoped<IRecorrenciaRepository, RecorrenciaRepository>();
 builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
-builder.Services.AddScoped<ITipoPagamentoRepository, TipoPagamentoRepository>();
 builder.Services.AddScoped<IMovimentacaoParcelaService, MovimentacaoParcelaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 

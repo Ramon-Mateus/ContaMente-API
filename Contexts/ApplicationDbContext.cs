@@ -12,7 +12,6 @@ namespace ContaMente.Contexts
         public DbSet<Categoria> Categorias => Set<Categoria>();
         public DbSet<Parcela> Parcelas => Set<Parcela>();
         public DbSet<Recorrencia> Recorrencias => Set<Recorrencia>();
-        public DbSet<TipoPagamento> TiposPagamento => Set<TipoPagamento>();
         public DbSet<Responsavel> Responsaveis => Set<Responsavel>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,6 +36,10 @@ namespace ContaMente.Contexts
                 .WithMany(c => c.Movimentacoes)
                 .HasForeignKey(g => g.CategoriaId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Movimentacao>()
+                .Property(m => m.TipoPagamento)
+                .HasConversion<int>();
         }
     }
 }
