@@ -4,7 +4,7 @@ namespace ContaMente.Services.Interfaces
 {
     public interface ITipoPagamentoService
     {
-        Task<List<TipoPagamento>> GetTiposPagamento();
-        Task<TipoPagamento?> GetTipoPagamentoById(int id);
+        List<TipoPagamentoDto> GetTiposPagamento();
+        TipoPagamentoDto? GetTipoPagamentoById(int id);
     }
 }

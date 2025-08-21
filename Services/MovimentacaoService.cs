@@ -19,7 +19,7 @@ namespace ContaMente.Services
             _movimentacaoParcelaService = movimentacaoParcelaService;
         }
 
-        public async Task<Dictionary<DateTime, List<Movimentacao>>> GetMovimentacoes(
+        public async Task<Dictionary<DateTime, List<MovimentacaoDto>>> GetMovimentacoes(
             int? mes,
             int? ano,
             string userId,
@@ -42,7 +42,13 @@ namespace ContaMente.Services
                 query = query.Where(m => categoriasIds.Contains(m.CategoriaId));
 
             if (tiposPagamentoIds.Count != 0)
-                query = query.Where(m => tiposPagamentoIds.Contains(m.TipoPagamentoId));
+            {
+                var tiposPagamento = tiposPagamentoIds
+                    .Select(id => (TipoPagamentoEnum)id)
+                    .ToList();
+
+                query = query.Where(m => tiposPagamento.Contains(m.TipoPagamento));
+            }
 
             //Filtros de responsáveis
             bool filtrarPorNulo = responsaveisIds.Contains(0);
@@ -70,17 +76,67 @@ namespace ContaMente.Services
                 .OrderByDescending(m => m.Data)
                 .ToListAsync();
 
+            // var movimentacoesPorDia = movimentacoes
+            //     .GroupBy(m => m.Data.Date.AddDays(1))
+            //     .ToDictionary(g => g.Key, g => g.ToList());
+            
             var movimentacoesPorDia = movimentacoes
                 .GroupBy(m => m.Data.Date.AddDays(1))
-                .ToDictionary(g => g.Key, g => g.ToList());
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(m => new MovimentacaoDto
+                    {
+                        Id = m.Id,
+                        Valor = m.Valor,
+                        Data = m.Data,
+                        Descricao = m.Descricao,
+                        Fixa = m.Fixa,
+                        NumeroParcela = m.NumeroParcela,
+                        TipoPagamento = m.TipoPagamento != 0
+                            ? new TipoPagamentoDto
+                            {
+                                Id = (int)m.TipoPagamento,
+                                Nome = ((TipoPagamentoEnum)m.TipoPagamento).GetDisplayName()
+                            }
+                            : null,
+                        Responsavel = m.Responsavel,
+                        Categoria = m.Categoria,
+                        Recorrencia = m.Recorrencia,
+                        Parcela = m.Parcela
+                    }).ToList()
+                );
 
             return movimentacoesPorDia;
         }
 
-        public async Task<Movimentacao?> GetMovimentacaoById(int id, string userId)
+        public async Task<MovimentacaoDto?> GetMovimentacaoById(int id, string userId)
         {
-            return await _movimentacaoRepository.GetMovimentacaoById(id, userId);
-        }
+                var mov = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
+
+                if (mov == null)
+                    return null;
+
+                return new MovimentacaoDto
+                {
+                    Id = mov.Id,
+                    Valor = mov.Valor,
+                    Data = mov.Data,
+                    Descricao = mov.Descricao,
+                    Fixa = mov.Fixa,
+                    NumeroParcela = mov.NumeroParcela,
+                    TipoPagamento = mov.TipoPagamento != 0
+                        ? new TipoPagamentoDto
+                        {
+                            Id = (int)mov.TipoPagamento,
+                            Nome = ((TipoPagamentoEnum)mov.TipoPagamento).GetDisplayName()
+                        }
+                        : null,
+                    Responsavel = mov.Responsavel,
+                    Categoria = mov.Categoria,
+                    Recorrencia = mov.Recorrencia,
+                    Parcela = mov.Parcela
+                };
+            }
 
         public async Task<Movimentacao> CreateMovimentacao(CreateMovimentacaoDto createMovimentacaoDto)
         {
@@ -91,7 +147,7 @@ namespace ContaMente.Services
                 Data = createMovimentacaoDto.Data,
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
-                TipoPagamentoId = createMovimentacaoDto.TipoPagamentoId,
+                TipoPagamento = (TipoPagamentoEnum)createMovimentacaoDto.TipoPagamentoId,
                 ParcelaId = createMovimentacaoDto.ParcelaId,
                 NumeroParcela = createMovimentacaoDto.NumeroParcela,
                 ResponsavelId = createMovimentacaoDto.ResponsavelId
@@ -133,7 +189,7 @@ namespace ContaMente.Services
                     Data = DateTime.UtcNow,
                     Fixa = true,
                     CategoriaId = movimentacaoOriginal.CategoriaId,
-                    TipoPagamentoId = movimentacaoOriginal.TipoPagamentoId,
+                    TipoPagamento = movimentacaoOriginal.TipoPagamento,
                     RecorrenciaId = recorrencia.Id,
                     ResponsavelId = movimentacaoOriginal.ResponsavelId
                 };
@@ -144,7 +200,7 @@ namespace ContaMente.Services
 
         public async Task<Movimentacao?> UpdateMovimentacao(int id, UpdateMovimentacaoDto updateMovimentacaoDto, string userId)
         {
-            var movimentacao = await this.GetMovimentacaoById(id, userId);
+            var movimentacao = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
 
             if (movimentacao == null)
             {
@@ -173,7 +229,7 @@ namespace ContaMente.Services
 
             if (updateMovimentacaoDto.TipoPagamentoId.HasValue)
             {
-                movimentacao.TipoPagamentoId = updateMovimentacaoDto.TipoPagamentoId.Value;
+                movimentacao.TipoPagamento = (TipoPagamentoEnum)updateMovimentacaoDto.TipoPagamentoId.Value;
             }
 
             movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId;
@@ -183,7 +239,7 @@ namespace ContaMente.Services
 
         public async Task<bool> DeleteMovimentacao(int id, string userId)
         {
-            var movimentacao = await this.GetMovimentacaoById(id, userId);
+            var movimentacao = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
 
             if (movimentacao == null)
             {

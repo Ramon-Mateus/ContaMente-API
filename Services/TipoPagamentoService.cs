@@ -6,18 +6,30 @@ namespace ContaMente.Services
 {
     public class TipoPagamentoService : ITipoPagamentoService
     {
-        private readonly ITipoPagamentoRepository _tipoPagamentoRepository;
-
-        public TipoPagamentoService(ITipoPagamentoRepository tipoPagamentoRepository) => _tipoPagamentoRepository = tipoPagamentoRepository;
-
-        public async Task<List<TipoPagamento>> GetTiposPagamento()
+        public List<TipoPagamentoDto> GetTiposPagamento()
         {
-            return await _tipoPagamentoRepository.GetTiposPagamento();
+            return Enum.GetValues(typeof(TipoPagamentoEnum))
+                .Cast<TipoPagamentoEnum>()
+                .Select(e => new TipoPagamentoDto
+                {
+                    Id = (int)e,
+                    Nome = e.GetDisplayName()
+                })
+                .ToList();
         }
 
-        public async Task<TipoPagamento?> GetTipoPagamentoById(int id)
+        public TipoPagamentoDto? GetTipoPagamentoById(int id)
         {
-            return await _tipoPagamentoRepository.GetTipoPagamentoById(id);
+            if (Enum.IsDefined(typeof(TipoPagamentoEnum), id))
+            {
+                return new TipoPagamentoDto
+                {
+                    Id = id,
+                    Nome = ((TipoPagamentoEnum)id).GetDisplayName()
+                };
+            }
+
+            return null;
         }
     }
 }
