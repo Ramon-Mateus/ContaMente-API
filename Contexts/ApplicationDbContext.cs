@@ -13,6 +13,7 @@ namespace ContaMente.Contexts
         public DbSet<Parcela> Parcelas => Set<Parcela>();
         public DbSet<Recorrencia> Recorrencias => Set<Recorrencia>();
         public DbSet<Responsavel> Responsaveis => Set<Responsavel>();
+        public DbSet<Cartao> Cartoes => Set<Cartao>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +41,12 @@ namespace ContaMente.Contexts
             modelBuilder.Entity<Movimentacao>()
                 .Property(m => m.TipoPagamento)
                 .HasConversion<int>();
+
+            modelBuilder.Entity<Cartao>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

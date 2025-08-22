@@ -12,6 +12,9 @@ namespace ContaMente.Models
         public int? NumeroParcela { get; set; }
         public TipoPagamentoEnum TipoPagamento { get; set; }
         [JsonIgnore]
+        public int? CartaoId { get; set; }
+        public Cartao? Cartao { get; set; }
+        [JsonIgnore]
         public int CategoriaId { get; set; }
         [JsonIgnore]
         public int? ResponsavelId { get; set; }
