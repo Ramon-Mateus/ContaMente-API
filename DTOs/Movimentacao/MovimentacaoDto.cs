@@ -13,4 +13,5 @@ public class MovimentacaoDto
         public Categoria? Categoria { get; set; }
         public Recorrencia? Recorrencia { get; set; }
         public Parcela? Parcela { get; set; }
+        public Cartao? Cartao { get; set; }
 }

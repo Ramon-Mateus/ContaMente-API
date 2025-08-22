@@ -20,5 +20,6 @@ namespace ContaMente.DTOs
         public int TipoPagamentoId { get; set; }
         public int? ParcelaId { get; set; }
         public int? ResponsavelId { get; set; }
+        public int? CartaoId { get; set; }
     }
 }
