@@ -1,6 +1,3 @@
-using ContaMente.DTOs;
-using ContaMente.Models;
-using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers

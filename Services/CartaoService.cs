@@ -28,7 +28,8 @@ namespace ContaMente.Services
             var cartao = new Cartao
             {
                 Apelido = createCartaoDto.Apelido,
-                DiaFechamento = createCartaoDto.DiaFechamento
+                DiaFechamento = createCartaoDto.DiaFechamento,
+                UserId = userId
             };
 
             return await _cartaoRepository.CreateCartao(cartao);
@@ -47,6 +48,9 @@ namespace ContaMente.Services
             {
                 cartao.Apelido = updateCartaoDto.Apelido;
             }
+
+            cartao.DiaFechamento = updateCartaoDto.DiaFechamento;
+
 
             return await _cartaoRepository.UpdateCartao(cartao);
         }
