@@ -44,13 +44,8 @@ namespace ContaMente.Services
                 return null;
             }
 
-            if (!string.IsNullOrEmpty(updateCartaoDto.Apelido))
-            {
-                cartao.Apelido = updateCartaoDto.Apelido;
-            }
-
+            cartao.Apelido = updateCartaoDto.Apelido;
             cartao.DiaFechamento = updateCartaoDto.DiaFechamento;
-
 
             return await _cartaoRepository.UpdateCartao(cartao);
         }

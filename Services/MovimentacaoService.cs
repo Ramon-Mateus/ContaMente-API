@@ -75,10 +75,6 @@ namespace ContaMente.Services
             var movimentacoes = await query
                 .OrderByDescending(m => m.Data)
                 .ToListAsync();
-
-            // var movimentacoesPorDia = movimentacoes
-            //     .GroupBy(m => m.Data.Date.AddDays(1))
-            //     .ToDictionary(g => g.Key, g => g.ToList());
             
             var movimentacoesPorDia = movimentacoes
                 .GroupBy(m => m.Data.Date.AddDays(1))
@@ -102,7 +98,8 @@ namespace ContaMente.Services
                         Responsavel = m.Responsavel,
                         Categoria = m.Categoria,
                         Recorrencia = m.Recorrencia,
-                        Parcela = m.Parcela
+                        Parcela = m.Parcela,
+                        Cartao = m.Cartao
                     }).ToList()
                 );
 
@@ -134,7 +131,8 @@ namespace ContaMente.Services
                     Responsavel = mov.Responsavel,
                     Categoria = mov.Categoria,
                     Recorrencia = mov.Recorrencia,
-                    Parcela = mov.Parcela
+                    Parcela = mov.Parcela,
+                    Cartao = mov.Cartao
                 };
             }
 
@@ -150,7 +148,8 @@ namespace ContaMente.Services
                 TipoPagamento = (TipoPagamentoEnum)createMovimentacaoDto.TipoPagamentoId,
                 ParcelaId = createMovimentacaoDto.ParcelaId,
                 NumeroParcela = createMovimentacaoDto.NumeroParcela,
-                ResponsavelId = createMovimentacaoDto.ResponsavelId
+                ResponsavelId = createMovimentacaoDto.ResponsavelId,
+                CartaoId = createMovimentacaoDto.CartaoId
             };
 
             var createdMovimentacao = await _movimentacaoRepository.CreateMovimentacao(movimentacao);
@@ -191,7 +190,8 @@ namespace ContaMente.Services
                     CategoriaId = movimentacaoOriginal.CategoriaId,
                     TipoPagamento = movimentacaoOriginal.TipoPagamento,
                     RecorrenciaId = recorrencia.Id,
-                    ResponsavelId = movimentacaoOriginal.ResponsavelId
+                    ResponsavelId = movimentacaoOriginal.ResponsavelId,
+                    CartaoId = movimentacaoOriginal.CartaoId
                 };
 
                 await _movimentacaoRepository.CreateMovimentacao(novaMovimentacao);
@@ -233,6 +233,7 @@ namespace ContaMente.Services
             }
 
             movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId;
+            movimentacao.CartaoId      = updateMovimentacaoDto.CartaoId;
 
             return await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
         }
