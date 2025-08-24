@@ -27,7 +27,8 @@ namespace ContaMente.Controllers
             [FromQuery] bool entrada,
             [FromQuery] List<int> categoriasIds,
             [FromQuery] List<int> tiposPagamentoIds,
-            [FromQuery] List<int> responsaveisIds)
+            [FromQuery] List<int> responsaveisIds,
+            [FromQuery] List<int> cartoesIds)
         {
             if (mes < 1 || mes > 12)
                 return BadRequest("O mês deve estar entre 1 e 12.");
@@ -53,7 +54,9 @@ namespace ContaMente.Controllers
                     entrada, 
                     categoriasIds, 
                     tiposPagamentoIds,
-                    responsaveisIds);
+                    responsaveisIds,
+                    cartoesIds
+                );
 
             return Ok(movimentacoes);
         }

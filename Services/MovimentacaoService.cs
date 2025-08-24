@@ -26,7 +26,8 @@ namespace ContaMente.Services
             bool entrada,
             List<int> categoriasIds,
             List<int> tiposPagamentoIds,
-            List<int> responsaveisIds)
+            List<int> responsaveisIds,
+            List<int> cartoesIds)
         {
             var query = _movimentacaoRepository.GetMovimentacoes(userId);
 
@@ -51,15 +52,15 @@ namespace ContaMente.Services
             }
 
             //Filtros de responsáveis
-            bool filtrarPorNulo = responsaveisIds.Contains(0);
+            bool filtrarResponsavelPorNulo = responsaveisIds.Contains(0);
             var outrosResponsaveisIds = responsaveisIds.Where(id => id != 0).ToList();
 
-            if (filtrarPorNulo && outrosResponsaveisIds.Count > 0)
+            if (filtrarResponsavelPorNulo && outrosResponsaveisIds.Count > 0)
             {
                 query = query.Where(m => m.ResponsavelId == null ||
                                     (m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value)));
             }
-            else if (filtrarPorNulo)
+            else if (filtrarResponsavelPorNulo)
             {
                 query = query.Where(m => m.ResponsavelId == null);
             }
@@ -70,6 +71,28 @@ namespace ContaMente.Services
             else if (responsaveisIds.Count > 0)
             {
                 query = query.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
+            }
+
+            //Filtros de cartões
+            bool filtrarCartaoPorNulo = cartoesIds.Contains(0);
+            var outrosCartoesIds = cartoesIds.Where(id => id != 0).ToList();
+
+            if (filtrarCartaoPorNulo && outrosCartoesIds.Count > 0)
+            {
+                query = query.Where(m => m.CartaoId == null ||
+                                    (m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value)));
+            }
+            else if (filtrarCartaoPorNulo)
+            {
+                query = query.Where(m => m.CartaoId == null);
+            }
+            else if (outrosCartoesIds.Count > 0)
+            {
+                query = query.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
+            }
+            else if (cartoesIds.Count > 0)
+            {
+                query = query.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
             }
 
             var movimentacoes = await query
