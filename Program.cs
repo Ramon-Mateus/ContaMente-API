@@ -36,6 +36,8 @@ builder.Services.AddScoped<IRecorrenciaService, RecorrenciaService>();
 builder.Services.AddScoped<IRecorrenciaRepository, RecorrenciaRepository>();
 builder.Services.AddScoped<ICartaoService, CartaoService>();
 builder.Services.AddScoped<ICartaoRepository, CartaoRepository>();
+builder.Services.AddScoped<IUserConfigurationService, UserConfigurationService>();
+builder.Services.AddScoped<IUserConfigurationRepository, UserConfigurationRepository>();
 builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
 builder.Services.AddScoped<IMovimentacaoParcelaService, MovimentacaoParcelaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();

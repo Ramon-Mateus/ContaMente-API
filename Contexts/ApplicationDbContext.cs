@@ -14,6 +14,7 @@ namespace ContaMente.Contexts
         public DbSet<Recorrencia> Recorrencias => Set<Recorrencia>();
         public DbSet<Responsavel> Responsaveis => Set<Responsavel>();
         public DbSet<Cartao> Cartoes => Set<Cartao>();
+        public DbSet<UserConfiguration> UserConfigurations => Set<UserConfiguration>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +48,12 @@ namespace ContaMente.Contexts
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            modelBuilder.Entity<UserConfiguration>()
+                .HasOne(uc => uc.User)
+                .WithMany()
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
