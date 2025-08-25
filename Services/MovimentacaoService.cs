@@ -12,11 +12,20 @@ namespace ContaMente.Services
         private readonly IMovimentacaoRepository _movimentacaoRepository;
         private readonly IRecorrenciaService _recorrenciaService;
         private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
-        public MovimentacaoService(IMovimentacaoRepository movimentacaoRepository, IRecorrenciaService recorrenciaService, IMovimentacaoParcelaService movimentacaoParcelaService)
+        private readonly IUserConfigurationService _userConfigurationService;
+        private readonly ICartaoRepository _cartaoRepository;
+        public MovimentacaoService(
+            IMovimentacaoRepository movimentacaoRepository,
+            IRecorrenciaService recorrenciaService,
+            IMovimentacaoParcelaService movimentacaoParcelaService,
+            IUserConfigurationService userConfigurationService,
+            ICartaoRepository cartaoRepository)
         {
             _movimentacaoRepository = movimentacaoRepository;
             _recorrenciaService = recorrenciaService;
             _movimentacaoParcelaService = movimentacaoParcelaService;
+            _userConfigurationService = userConfigurationService;
+            _cartaoRepository = cartaoRepository;
         }
 
         public async Task<Dictionary<DateTime, List<MovimentacaoDto>>> GetMovimentacoes(
@@ -31,13 +40,70 @@ namespace ContaMente.Services
         {
             var query = _movimentacaoRepository.GetMovimentacoes(userId);
 
-            if (mes.HasValue)
-                query = query.Where(m => m.Data.Month == mes.Value);
+            var userConfig = await _userConfigurationService.GetUserConfiguration(userId);
 
-            if (ano.HasValue)
-                query = query.Where(m => m.Data.Year == ano.Value);
+            if (userConfig!.ListagemPorFatura && mes.HasValue && ano.HasValue)
+            {
+                // Buscar todos os cartões do usuário
+                var cartoes = await _cartaoRepository.GetCartoes(userId);
 
-            query = query.Where(m => m.Categoria!.Entrada == entrada);
+                // Movimentações sem cartão (cartaoId is null) do mês completo
+                var queryMovsSemCartao = query.Where(m => m.CartaoId == null &&
+                                                    m.Data.Month == mes.Value &&
+                                                    m.Data.Year == ano.Value);
+
+                // Para cada cartão, aplicar a lógica de fatura
+                var queriesMovsComCartao = new List<IQueryable<Movimentacao>>();
+
+                foreach (var cartao in cartoes)
+                {
+                    var diaFechamento = cartao.DiaFechamento;
+
+                    // Data de início da fatura (dia do fechamento no mês solicitado)
+                    var dataInicioFatura = new DateTime(ano.Value, mes.Value, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
+
+                    // Data de fim da fatura (um dia antes do fechamento do próximo mês) - UTC
+                    DateTime dataFimFatura;
+                    if (mes.Value == 12)
+                    {
+                        dataFimFatura = new DateTime(ano.Value + 1, 1, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
+                    }
+                    else
+                    {
+                        dataFimFatura = new DateTime(ano.Value, mes.Value + 1, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
+                    }
+
+                    // Buscar movimentações deste cartão que estão dentro do período da fatura
+                    var queryCartao = query.Where(m => m.CartaoId == cartao.Id &&
+                                                 m.Data >= dataInicioFatura &&
+                                                 m.Data < dataFimFatura);
+
+                    queriesMovsComCartao.Add(queryCartao);
+                }
+
+                // Unir todas as queries
+                if (queriesMovsComCartao.Any())
+                {
+                    var queryUnificada = queryMovsSemCartao;
+                    foreach (var queryCartao in queriesMovsComCartao)
+                    {
+                        queryUnificada = queryUnificada.Union(queryCartao);
+                    }
+                    query = queryUnificada;
+                }
+                else
+                {
+                    query = queryMovsSemCartao;
+                }
+            }
+            else
+            {
+                if (mes.HasValue)
+                    query = query.Where(m => m.Data.Month == mes.Value);
+
+                if (ano.HasValue)
+                    query = query.Where(m => m.Data.Year == ano.Value);
+            }
 
             if (categoriasIds.Count != 0)
                 query = query.Where(m => categoriasIds.Contains(m.CategoriaId));
