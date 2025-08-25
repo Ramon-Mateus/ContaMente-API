@@ -1,20 +1,17 @@
-﻿using ContaMente.DTOs;
-using ContaMente.Models;
-using ContaMente.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ContaMente.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ResponsavelController : ControllerBase
+    public class CartaoController : ControllerBase
     {
-        private readonly IResponsavelService _responsavelService;
+        private readonly ICartaoService _cartaoService;
 
-        public ResponsavelController(IResponsavelService responsavelService) => _responsavelService = responsavelService;
+        public CartaoController(ICartaoService cartaoService) => _cartaoService = cartaoService;
 
         [HttpGet]
-        public async Task<IActionResult> GetResponsaveis()
+        public async Task<IActionResult> GetCartoes()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -23,13 +20,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var responsaveis = await _responsavelService.GetResponsaveis(userId);
+            var cartoes = await _cartaoService.GetCartoes(userId);
 
-            return Ok(responsaveis);
+            return Ok(cartoes);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetResponsavelById(int id)
+        public async Task<IActionResult> GetCartaoById(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -38,18 +35,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var responsavel = await _responsavelService.GetResponsavelById(id, userId);
+            var cartao = await _cartaoService.GetCartaoById(id, userId);
 
-            if (responsavel == null)
+            if (cartao == null)
             {
                 return NotFound();
             }
 
-            return Ok(responsavel);
+            return Ok(cartao);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Responsavel>> CreateResponsavel([FromBody] CreateUpdateResponsavelDto createResponsavelDto)
+        public async Task<ActionResult<Cartao>> CreateCartao([FromBody] CreateUpdateCartaoDto createCartaoDto)
         {
             if (!ModelState.IsValid)
             {
@@ -63,13 +60,13 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var responsavel = await _responsavelService.CreateResponsavel(createResponsavelDto, userId);
+            var cartao = await _cartaoService.CreateCartao(createCartaoDto, userId);
 
-            return CreatedAtAction(nameof(GetResponsavelById), new { id = responsavel.Id }, responsavel);
+            return CreatedAtAction(nameof(GetCartaoById), new { id = cartao.Id }, cartao);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateResponsavel(int id, [FromBody] CreateUpdateResponsavelDto updateResponsavelDto)
+        public async Task<IActionResult> UpdateCartao(int id, [FromBody] CreateUpdateCartaoDto updateCartaoDto)
         {
             if (!ModelState.IsValid)
             {
@@ -83,18 +80,18 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var responsavel = await _responsavelService.UpdateResponsavel(id, updateResponsavelDto, userId);
+            var cartao = await _cartaoService.UpdateCartao(id, updateCartaoDto, userId);
 
-            if (responsavel == null)
+            if (cartao == null)
             {
                 return NotFound();
             }
 
-            return Ok(responsavel);
+            return Ok(cartao);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteResponsavel(int id)
+        public async Task<IActionResult> DeleteCartao(int id)
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
@@ -103,7 +100,7 @@ namespace ContaMente.Controllers
                 return Unauthorized("Usuário não autenticado.");
             }
 
-            var result = await _responsavelService.DeleteResponsavel(id, userId);
+            var result = await _cartaoService.DeleteCartao(id, userId);
 
             if (!result)
             {

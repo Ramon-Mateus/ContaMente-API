@@ -15,12 +15,14 @@ namespace ContaMente.Controllers
         private readonly UserManager<User> _userManager;
 
         private readonly IEmailService _emailService;
+        private readonly IUserConfigurationService _userConfigurationService;
 
-        public AuthController(SignInManager<User> signInManager, UserManager<User> userManager, IEmailService emailService)
+        public AuthController(SignInManager<User> signInManager, UserManager<User> userManager, IEmailService emailService, IUserConfigurationService userConfigurationService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _emailService = emailService;
+            _userConfigurationService = userConfigurationService;
         }
 
         [HttpPost("logout")]
@@ -102,6 +104,8 @@ namespace ContaMente.Controllers
             {
                 return BadRequest(result.Errors);
             }
+
+            await _userConfigurationService.CreateUserConfiguration(user.Id);
 
             return Ok(new
             {
