@@ -54,7 +54,8 @@ namespace ContaMente.Services
                     TipoPagamentoId = createParcelaDto.TipoPagamentoId,
                     ParcelaId = parcelaCriada.Id,
                     ResponsavelId = createParcelaDto.ResponsavelId,
-                    NumeroParcela = i + 1
+                    NumeroParcela = i + 1,
+                    CartaoId = createParcelaDto.CartaoId
                 };
 
                 await _movimentacaoService.CreateMovimentacao(movimentacaoParcela);
