@@ -1,3 +1,4 @@
+using ContaMente.DTOs;
 using ContaMente.Models;
 
 public class MovimentacaoDto
@@ -9,9 +10,9 @@ public class MovimentacaoDto
         public bool Fixa { get; set; }
         public int? NumeroParcela { get; set; }
         public TipoPagamentoDto? TipoPagamento { get; set; }
-        public Responsavel? Responsavel { get; set; }
-        public Categoria? Categoria { get; set; }
-        public Recorrencia? Recorrencia { get; set; }
-        public Parcela? Parcela { get; set; }
-        public Cartao? Cartao { get; set; }
+        public ResponsavelDto? Responsavel { get; set; }
+        public CategoriaDto? Categoria { get; set; }
+        public RecorrenciaDto? Recorrencia { get; set; }
+        public ParcelaDto? Parcela { get; set; }
+        public CartaoDto? Cartao { get; set; }
 }

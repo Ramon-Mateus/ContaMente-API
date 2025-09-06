@@ -184,11 +184,48 @@ namespace ContaMente.Services
                                 Nome = ((TipoPagamentoEnum)m.TipoPagamento).GetDisplayName()
                             }
                             : null,
-                        Responsavel = m.Responsavel,
-                        Categoria = m.Categoria,
-                        Recorrencia = m.Recorrencia,
-                        Parcela = m.Parcela,
-                        Cartao = m.Cartao
+                        Responsavel = m.Responsavel != null
+                            ? new ResponsavelDto
+                            {
+                                Id = m.Responsavel.Id,
+                                Nome = m.Responsavel.Nome
+                            }
+                            : null,
+                        Categoria = m.Categoria != null
+                            ? new CategoriaDto
+                            {
+                                Id = m.Categoria.Id,
+                                Nome = m.Categoria.Nome,
+                                Entrada = m.Categoria.Entrada
+                            }
+                            : null,
+                        Recorrencia = m.Recorrencia != null
+                            ? new RecorrenciaDto
+                            {
+                                Id = m.Recorrencia.Id,
+                                DataInicio = m.Recorrencia.DataInicio,
+                                DataFim = m.Recorrencia.DataFim
+                            }
+                            : null,
+                        Parcela = m.Parcela != null
+                            ? new ParcelaDto
+                            {
+                                Id = m.Parcela.Id,
+                                ValorTotal = m.Parcela.ValorTotal,
+                                NumeroParcelas = m.Parcela.NumeroParcelas,
+                                ValorParcela = m.Parcela.ValorParcela,
+                                DataInicio = m.Parcela.DataInicio,
+                                DataFim = m.Parcela.DataFim
+                            }
+                            : null,
+                        Cartao = m.Cartao != null
+                            ? new CartaoDto
+                            {
+                                Id = m.Cartao.Id,
+                                Apelido = m.Cartao.Apelido,
+                                DiaFechamento = m.Cartao.DiaFechamento
+                            }
+                            : null
                     }).ToList()
                 );
 
@@ -217,11 +254,48 @@ namespace ContaMente.Services
                             Nome = ((TipoPagamentoEnum)mov.TipoPagamento).GetDisplayName()
                         }
                         : null,
-                    Responsavel = mov.Responsavel,
-                    Categoria = mov.Categoria,
-                    Recorrencia = mov.Recorrencia,
-                    Parcela = mov.Parcela,
-                    Cartao = mov.Cartao
+                    Responsavel = mov.Responsavel != null
+                        ? new ResponsavelDto
+                        {
+                            Id = mov.Responsavel.Id,
+                            Nome = mov.Responsavel.Nome
+                        }
+                        : null,
+                    Categoria = mov.Categoria != null
+                        ? new CategoriaDto
+                        {
+                            Id = mov.Categoria.Id,
+                            Nome = mov.Categoria.Nome,
+                            Entrada = mov.Categoria.Entrada
+                        }
+                        : null,
+                    Recorrencia = mov.Recorrencia != null
+                        ? new RecorrenciaDto
+                        {
+                            Id = mov.Recorrencia.Id,
+                            DataInicio = mov.Recorrencia.DataInicio,
+                            DataFim = mov.Recorrencia.DataFim
+                        }
+                        : null,
+                    Parcela = mov.Parcela != null
+                        ? new ParcelaDto
+                        {
+                            Id = mov.Parcela.Id,
+                            ValorTotal = mov.Parcela.ValorTotal,
+                            NumeroParcelas = mov.Parcela.NumeroParcelas,
+                            ValorParcela = mov.Parcela.ValorParcela,
+                            DataInicio = mov.Parcela.DataInicio,
+                            DataFim = mov.Parcela.DataFim
+                        }
+                        : null,
+                    Cartao = mov.Cartao != null
+                        ? new CartaoDto
+                        {
+                            Id = mov.Cartao.Id,
+                            Apelido = mov.Cartao.Apelido,
+                            DiaFechamento = mov.Cartao.DiaFechamento
+                        }
+                        : null
                 };
             }
 
