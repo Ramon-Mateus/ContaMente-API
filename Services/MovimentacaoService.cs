@@ -9,11 +9,21 @@ namespace ContaMente.Services
 {
     public class MovimentacaoService : IMovimentacaoService
     {
-        private readonly IMovimentacaoRepository _movimentacaoRepository;
+        #region Services
         private readonly IRecorrenciaService _recorrenciaService;
-        private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
         private readonly IUserConfigurationService _userConfigurationService;
+        private readonly IMovimentacaoParcelaService _movimentacaoParcelaService;
+        #endregion
+        
+        #region Repositories
+        private readonly IMovimentacaoRepository _movimentacaoRepository;
         private readonly ICartaoRepository _cartaoRepository;
+        #endregion
+        
+        #region Variaveis
+        private IQueryable<Movimentacao> _queryableMovimentacao;
+        #endregion
+        
         public MovimentacaoService(
             IMovimentacaoRepository movimentacaoRepository,
             IRecorrenciaService recorrenciaService,
@@ -38,7 +48,7 @@ namespace ContaMente.Services
             List<int> responsaveisIds,
             List<int> cartoesIds)
         {
-            var query = _movimentacaoRepository.GetMovimentacoes(userId);
+            _queryableMovimentacao = _movimentacaoRepository.GetMovimentacoes(userId);
 
             var userConfig = await _userConfigurationService.GetUserConfiguration(userId);
 
@@ -48,9 +58,10 @@ namespace ContaMente.Services
                 var cartoes = await _cartaoRepository.GetCartoes(userId);
 
                 // Movimentações sem cartão (cartaoId is null) do mês completo
-                var queryMovsSemCartao = query.Where(m => m.CartaoId == null &&
-                                                    m.Data.Month == mes.Value &&
-                                                    m.Data.Year == ano.Value);
+                var queryMovsSemCartao = _queryableMovimentacao.Where(m => m.CartaoId == null &&
+                                                                           m.Data.Month == mes.Value &&
+                                                                           m.Data.Year == ano.Value
+                                                                           && m.Categoria!.Entrada == entrada);
 
                 // Para cada cartão, aplicar a lógica de fatura
                 var queriesMovsComCartao = new List<IQueryable<Movimentacao>>();
@@ -74,9 +85,10 @@ namespace ContaMente.Services
                     }
 
                     // Buscar movimentações deste cartão que estão dentro do período da fatura
-                    var queryCartao = query.Where(m => m.CartaoId == cartao.Id &&
-                                                 m.Data >= dataInicioFatura &&
-                                                 m.Data < dataFimFatura);
+                    var queryCartao = _queryableMovimentacao.Where(m => m.CartaoId == cartao.Id &&
+                                                                        m.Data >= dataInicioFatura &&
+                                                                        m.Data < dataFimFatura
+                                                                        && m.Categoria!.Entrada == entrada);
 
                     queriesMovsComCartao.Add(queryCartao);
                 }
@@ -89,24 +101,24 @@ namespace ContaMente.Services
                     {
                         queryUnificada = queryUnificada.Union(queryCartao);
                     }
-                    query = queryUnificada;
+                    _queryableMovimentacao = queryUnificada;
                 }
                 else
                 {
-                    query = queryMovsSemCartao;
+                    _queryableMovimentacao = queryMovsSemCartao;
                 }
             }
             else
             {
                 if (mes.HasValue)
-                    query = query.Where(m => m.Data.Month == mes.Value);
+                    _queryableMovimentacao = _queryableMovimentacao.Where(m => m.Data.Month == mes.Value);
 
                 if (ano.HasValue)
-                    query = query.Where(m => m.Data.Year == ano.Value);
+                    _queryableMovimentacao = _queryableMovimentacao.Where(m => m.Data.Year == ano.Value);
             }
 
             if (categoriasIds.Count != 0)
-                query = query.Where(m => categoriasIds.Contains(m.CategoriaId));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => categoriasIds.Contains(m.CategoriaId));
 
             if (tiposPagamentoIds.Count != 0)
             {
@@ -114,7 +126,7 @@ namespace ContaMente.Services
                     .Select(id => (TipoPagamentoEnum)id)
                     .ToList();
 
-                query = query.Where(m => tiposPagamento.Contains(m.TipoPagamento));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => tiposPagamento.Contains(m.TipoPagamento));
             }
 
             //Filtros de responsáveis
@@ -123,20 +135,20 @@ namespace ContaMente.Services
 
             if (filtrarResponsavelPorNulo && outrosResponsaveisIds.Count > 0)
             {
-                query = query.Where(m => m.ResponsavelId == null ||
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId == null ||
                                     (m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value)));
             }
             else if (filtrarResponsavelPorNulo)
             {
-                query = query.Where(m => m.ResponsavelId == null);
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId == null);
             }
             else if (outrosResponsaveisIds.Count > 0)
             {
-                query = query.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
             }
             else if (responsaveisIds.Count > 0)
             {
-                query = query.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
             }
 
             //Filtros de cartões
@@ -145,23 +157,23 @@ namespace ContaMente.Services
 
             if (filtrarCartaoPorNulo && outrosCartoesIds.Count > 0)
             {
-                query = query.Where(m => m.CartaoId == null ||
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId == null ||
                                     (m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value)));
             }
             else if (filtrarCartaoPorNulo)
             {
-                query = query.Where(m => m.CartaoId == null);
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId == null);
             }
             else if (outrosCartoesIds.Count > 0)
             {
-                query = query.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
             }
             else if (cartoesIds.Count > 0)
             {
-                query = query.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
+                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
             }
 
-            var movimentacoes = await query
+            var movimentacoes = await _queryableMovimentacao
                 .OrderByDescending(m => m.Data)
                 .ToListAsync();
             
@@ -231,7 +243,7 @@ namespace ContaMente.Services
 
             return movimentacoesPorDia;
         }
-
+        
         public async Task<MovimentacaoDto?> GetMovimentacaoById(int id, string userId)
         {
                 var mov = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
