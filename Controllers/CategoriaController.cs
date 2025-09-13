@@ -20,12 +20,7 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var categorias = await _categoriaService.GetCategorias(userId, entrada);
+            var categorias = await _categoriaService.GetCategorias(userId!, entrada);
 
             return Ok(categorias);
         }
@@ -35,16 +30,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var categoria = await _categoriaService.GetCategoriaById(id, userId);
+            var categoria = await _categoriaService.GetCategoriaById(id, userId!);
 
             if (categoria == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Categoria com ID {id} não encontrada.");
             }
 
             return Ok(categoria);
@@ -60,12 +50,7 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto, userId);
+            var categoria = await _categoriaService.CreateCategoria(createCategoriaDto, userId!);
 
             return CreatedAtAction(nameof(GetCategoriaById), new { id = categoria.Id }, categoria);
         }
@@ -80,16 +65,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto, userId);
+            var categoria = await _categoriaService.UpdateCategoria(id, updateCategoriaDto, userId!);
 
             if (categoria == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Categoria com ID {id} não encontrada.");
             }
             
             return Ok(categoria);
@@ -100,16 +80,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var result = await _categoriaService.DeleteCategoria(id, userId);
+            var result = await _categoriaService.DeleteCategoria(id, userId!);
 
             if (!result)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Categoria com ID {id} não encontrada.");
             }
 
             return NoContent();
