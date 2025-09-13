@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using DotNetEnv;
 using Hangfire;
 using Hangfire.PostgreSql;
+using ContaMente.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,14 +58,36 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddAuthorization();
 
-// builder.Services
-//     .AddIdentityApiEndpoints<IdentityUser>()
-//     .AddEntityFrameworkStores<ApplicationDbContext>();
-
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+    options.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = 401;
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = 401,
+            mensagem = "Usuário não autenticado.",
+            detalhe = "É necessário fazer login para acessar este recurso."
+        });
+        return context.Response.WriteAsync(result);
+    };
+    
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = 403;
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            status = 403,
+            mensagem = "Acesso negado.",
+            detalhe = "Você não tem permissão para acessar este recurso."
+        });
+        return context.Response.WriteAsync(result);
+    };
 });
 
 var app = builder.Build();
@@ -76,6 +99,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware(typeof(GlobalErrorHandlingMiddleware));
 
 app.UseHttpsRedirection();
 
@@ -90,7 +115,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.MapIdentityApi<User>();
 
 app.Run();

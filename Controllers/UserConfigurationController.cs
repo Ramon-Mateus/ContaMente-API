@@ -15,12 +15,7 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var configuration = await _userConfigurationService.GetUserConfiguration(userId);
+            var configuration = await _userConfigurationService.GetUserConfiguration(userId!);
 
             return Ok(configuration);
         }
@@ -35,16 +30,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var configuration = await _userConfigurationService.UpdateUserConfiguration(updateUserConfigurationDto, userId);
+            var configuration = await _userConfigurationService.UpdateUserConfiguration(updateUserConfigurationDto, userId!);
 
             if (configuration == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Configuração do usuário com ID {userId} não encontrada.");
             }
 
             return Ok(configuration);

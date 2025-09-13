@@ -21,7 +21,7 @@ namespace ContaMente.Services
         #endregion
         
         #region Variaveis
-        private IQueryable<Movimentacao> _queryableMovimentacao;
+        private IQueryable<Movimentacao>? _queryableMovimentacao;
         #endregion
         
         public MovimentacaoService(
@@ -81,7 +81,7 @@ namespace ContaMente.Services
                 var cartoes = await _cartaoRepository.GetCartoes(userId);
 
                 // Movimentações sem cartão (cartaoId is null) do mês completo
-                var queryMovsSemCartao = _queryableMovimentacao.Where(m => m.CartaoId == null &&
+                var queryMovsSemCartao = _queryableMovimentacao!.Where(m => m.CartaoId == null &&
                                                                                               m.Data.Month == mes.Value &&
                                                                                               m.Data.Year == ano.Value &&
                                                                                               m.Categoria!.Entrada == entrada);
@@ -108,7 +108,7 @@ namespace ContaMente.Services
                     }
 
                     // Buscar movimentações deste cartão que estão dentro do período da fatura
-                    var queryCartao = _queryableMovimentacao.Where(m => m.CartaoId == cartao.Id &&
+                    var queryCartao = _queryableMovimentacao!.Where(m => m.CartaoId == cartao.Id &&
                                                                                             m.Data >= dataInicioFatura &&
                                                                                             m.Data < dataFimFatura
                                                                                             && m.Categoria!.Entrada == entrada);
@@ -134,10 +134,10 @@ namespace ContaMente.Services
             else
             {
                 if (mes.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao.Where(m => m.Data.Month == mes.Value);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value);
 
                 if (ano.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao.Where(m => m.Data.Year == ano.Value);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
             }
         }
 
@@ -146,7 +146,7 @@ namespace ContaMente.Services
             List<int> tiposPagamentoIds)
         {
             if (categoriasIds.Count != 0)
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => categoriasIds.Contains(m.CategoriaId));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => categoriasIds.Contains(m.CategoriaId));
 
             if (tiposPagamentoIds.Count != 0)
             {
@@ -154,7 +154,7 @@ namespace ContaMente.Services
                     .Select(id => (TipoPagamentoEnum)id)
                     .ToList();
 
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => tiposPagamento.Contains(m.TipoPagamento));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => tiposPagamento.Contains(m.TipoPagamento));
             }
         }
 
@@ -167,20 +167,20 @@ namespace ContaMente.Services
 
             if (filtrarResponsavelPorNulo && outrosResponsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId == null ||
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId == null ||
                                                                            (m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value)));
             }
             else if (filtrarResponsavelPorNulo)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId == null);
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId == null);
             }
             else if (outrosResponsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
             }
             else if (responsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
             }
         }
 
@@ -193,20 +193,20 @@ namespace ContaMente.Services
 
             if (filtrarCartaoPorNulo && outrosCartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId == null ||
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId == null ||
                                                                            (m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value)));
             }
             else if (filtrarCartaoPorNulo)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId == null);
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId == null);
             }
             else if (outrosCartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
             }
             else if (cartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
             }
         }
 
@@ -217,133 +217,81 @@ namespace ContaMente.Services
                 .GroupBy(m => m.Data.Date.AddDays(1))
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Select(m => new MovimentacaoDto
-                    {
-                        Id = m.Id,
-                        Valor = m.Valor,
-                        Data = m.Data,
-                        Descricao = m.Descricao,
-                        Fixa = m.Fixa,
-                        NumeroParcela = m.NumeroParcela,
-                        TipoPagamento = m.TipoPagamento != 0
-                            ? new TipoPagamentoDto
-                            {
-                                Id = (int)m.TipoPagamento,
-                                Nome = ((TipoPagamentoEnum)m.TipoPagamento).GetDisplayName()
-                            }
-                            : null,
-                        Responsavel = m.Responsavel != null
-                            ? new ResponsavelDto
-                            {
-                                Id = m.Responsavel.Id,
-                                Nome = m.Responsavel.Nome
-                            }
-                            : null,
-                        Categoria = m.Categoria != null
-                            ? new CategoriaDto
-                            {
-                                Id = m.Categoria.Id,
-                                Nome = m.Categoria.Nome,
-                                Entrada = m.Categoria.Entrada
-                            }
-                            : null,
-                        Recorrencia = m.Recorrencia != null
-                            ? new RecorrenciaDto
-                            {
-                                Id = m.Recorrencia.Id,
-                                DataInicio = m.Recorrencia.DataInicio,
-                                DataFim = m.Recorrencia.DataFim
-                            }
-                            : null,
-                        Parcela = m.Parcela != null
-                            ? new ParcelaDto
-                            {
-                                Id = m.Parcela.Id,
-                                ValorTotal = m.Parcela.ValorTotal,
-                                NumeroParcelas = m.Parcela.NumeroParcelas,
-                                ValorParcela = m.Parcela.ValorParcela,
-                                DataInicio = m.Parcela.DataInicio,
-                                DataFim = m.Parcela.DataFim
-                            }
-                            : null,
-                        Cartao = m.Cartao != null
-                            ? new CartaoDto
-                            {
-                                Id = m.Cartao.Id,
-                                Apelido = m.Cartao.Apelido,
-                                DiaFechamento = m.Cartao.DiaFechamento
-                            }
-                            : null
-                    }).ToList()
+                    g => g.Select(MapToMovimentacaoDto).ToList()
                 );
         }
         
         public async Task<MovimentacaoDto?> GetMovimentacaoById(int id, string userId)
         {
-                var mov = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
+            var mov = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
 
-                if (mov == null)
-                    return null;
+            if (mov == null)
+                return null;
 
-                return new MovimentacaoDto
-                {
-                    Id = mov.Id,
-                    Valor = mov.Valor,
-                    Data = mov.Data,
-                    Descricao = mov.Descricao,
-                    Fixa = mov.Fixa,
-                    NumeroParcela = mov.NumeroParcela,
-                    TipoPagamento = mov.TipoPagamento != 0
-                        ? new TipoPagamentoDto
-                        {
-                            Id = (int)mov.TipoPagamento,
-                            Nome = ((TipoPagamentoEnum)mov.TipoPagamento).GetDisplayName()
-                        }
-                        : null,
-                    Responsavel = mov.Responsavel != null
-                        ? new ResponsavelDto
-                        {
-                            Id = mov.Responsavel.Id,
-                            Nome = mov.Responsavel.Nome
-                        }
-                        : null,
-                    Categoria = mov.Categoria != null
-                        ? new CategoriaDto
-                        {
-                            Id = mov.Categoria.Id,
-                            Nome = mov.Categoria.Nome,
-                            Entrada = mov.Categoria.Entrada
-                        }
-                        : null,
-                    Recorrencia = mov.Recorrencia != null
-                        ? new RecorrenciaDto
-                        {
-                            Id = mov.Recorrencia.Id,
-                            DataInicio = mov.Recorrencia.DataInicio,
-                            DataFim = mov.Recorrencia.DataFim
-                        }
-                        : null,
-                    Parcela = mov.Parcela != null
-                        ? new ParcelaDto
-                        {
-                            Id = mov.Parcela.Id,
-                            ValorTotal = mov.Parcela.ValorTotal,
-                            NumeroParcelas = mov.Parcela.NumeroParcelas,
-                            ValorParcela = mov.Parcela.ValorParcela,
-                            DataInicio = mov.Parcela.DataInicio,
-                            DataFim = mov.Parcela.DataFim
-                        }
-                        : null,
-                    Cartao = mov.Cartao != null
-                        ? new CartaoDto
-                        {
-                            Id = mov.Cartao.Id,
-                            Apelido = mov.Cartao.Apelido,
-                            DiaFechamento = mov.Cartao.DiaFechamento
-                        }
-                        : null
-                };
-            }
+            return MapToMovimentacaoDto(mov);
+        }
+
+        private static MovimentacaoDto MapToMovimentacaoDto(Movimentacao m)
+        {
+            return new MovimentacaoDto
+            {
+                Id = m.Id,
+                Valor = m.Valor,
+                Data = m.Data,
+                Descricao = m.Descricao,
+                Fixa = m.Fixa,
+                NumeroParcela = m.NumeroParcela,
+                TipoPagamento = m.TipoPagamento != 0
+                    ? new TipoPagamentoDto
+                    {
+                        Id = (int)m.TipoPagamento,
+                        Nome = ((TipoPagamentoEnum)m.TipoPagamento).GetDisplayName()
+                    }
+                    : null,
+                Responsavel = m.Responsavel != null
+                    ? new ResponsavelDto
+                    {
+                        Id = m.Responsavel.Id,
+                        Nome = m.Responsavel.Nome
+                    }
+                    : null,
+                Categoria = m.Categoria != null
+                    ? new CategoriaDto
+                    {
+                        Id = m.Categoria.Id,
+                        Nome = m.Categoria.Nome,
+                        Entrada = m.Categoria.Entrada
+                    }
+                    : null,
+                Recorrencia = m.Recorrencia != null
+                    ? new RecorrenciaDto
+                    {
+                        Id = m.Recorrencia.Id,
+                        DataInicio = m.Recorrencia.DataInicio,
+                        DataFim = m.Recorrencia.DataFim
+                    }
+                    : null,
+                Parcela = m.Parcela != null
+                    ? new ParcelaDto
+                    {
+                        Id = m.Parcela.Id,
+                        ValorTotal = m.Parcela.ValorTotal,
+                        NumeroParcelas = m.Parcela.NumeroParcelas,
+                        ValorParcela = m.Parcela.ValorParcela,
+                        DataInicio = m.Parcela.DataInicio,
+                        DataFim = m.Parcela.DataFim
+                    }
+                    : null,
+                Cartao = m.Cartao != null
+                    ? new CartaoDto
+                    {
+                        Id = m.Cartao.Id,
+                        Apelido = m.Cartao.Apelido,
+                        DiaFechamento = m.Cartao.DiaFechamento
+                    }
+                    : null
+            };
+        }
 
         public async Task<Movimentacao> CreateMovimentacao(CreateMovimentacaoDto createMovimentacaoDto)
         {

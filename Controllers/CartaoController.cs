@@ -15,12 +15,7 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var cartoes = await _cartaoService.GetCartoes(userId);
+            var cartoes = await _cartaoService.GetCartoes(userId!);
 
             return Ok(cartoes);
         }
@@ -30,16 +25,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var cartao = await _cartaoService.GetCartaoById(id, userId);
+            var cartao = await _cartaoService.GetCartaoById(id, userId!);
 
             if (cartao == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Cartão com ID {id} não encontrado.");
             }
 
             return Ok(cartao);
@@ -55,12 +45,7 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var cartao = await _cartaoService.CreateCartao(createCartaoDto, userId);
+            var cartao = await _cartaoService.CreateCartao(createCartaoDto, userId!);
 
             return CreatedAtAction(nameof(GetCartaoById), new { id = cartao.Id }, cartao);
         }
@@ -75,16 +60,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var cartao = await _cartaoService.UpdateCartao(id, updateCartaoDto, userId);
+            var cartao = await _cartaoService.UpdateCartao(id, updateCartaoDto, userId!);
 
             if (cartao == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Cartão com ID {id} não encontrado.");
             }
 
             return Ok(cartao);
@@ -95,16 +75,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var result = await _cartaoService.DeleteCartao(id, userId);
+            var result = await _cartaoService.DeleteCartao(id, userId!);
 
             if (!result)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Cartão com ID {id} não encontrado.");
             }
 
             return NoContent();

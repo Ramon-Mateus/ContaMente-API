@@ -16,13 +16,6 @@ namespace ContaMente.Controllers
         [HttpGet]
         public ActionResult<List<TipoPagamentoEnum>> GetTiposPagamento()
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
             var tiposPagamento = _tipoPagamentoService.GetTiposPagamento();
 
             return Ok(tiposPagamento);
@@ -31,18 +24,11 @@ namespace ContaMente.Controllers
         [HttpGet("{id}")]
         public ActionResult<TipoPagamentoEnum> GetTipoPagamentoById(int id)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
             var tipoPagamento = _tipoPagamentoService.GetTipoPagamentoById(id);
 
             if (tipoPagamento == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Tipo de pagamento com ID {id} não encontrado.");
             }
 
             return Ok(tipoPagamento);

@@ -31,26 +31,21 @@ namespace ContaMente.Controllers
             [FromQuery] List<int> cartoesIds)
         {
             if (mes < 1 || mes > 12)
-                return BadRequest("O mês deve estar entre 1 e 12.");
+                throw new ArgumentException("O mês deve estar entre 1 e 12.");
 
             if (ano < 1)
-                return BadRequest("Ano inválido.");
+                throw new ArgumentException("Ano inválido.");
 
             if (!mes.HasValue || !ano.HasValue)
-                return BadRequest("Mês ou ano não especificado.");
+                throw new ArgumentException("Mês ou ano não especificado.");
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
 
             var movimentacoes = await _movimentacaoService
                 .GetMovimentacoes(
                     mes, 
                     ano, 
-                    userId, 
+                    userId!, 
                     entrada, 
                     categoriasIds, 
                     tiposPagamentoIds,
@@ -66,16 +61,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var movimentacao = await _movimentacaoService.GetMovimentacaoById(id, userId);
+            var movimentacao = await _movimentacaoService.GetMovimentacaoById(id, userId!);
 
             if (movimentacao == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Movimentação com ID {id} não encontrada.");
             }
 
             return Ok(movimentacao);
@@ -91,16 +81,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var categoria = await _categoriaService.GetCategoriaById(createMovimentacaoDto.CategoriaId, userId);
+            var categoria = await _categoriaService.GetCategoriaById(createMovimentacaoDto.CategoriaId, userId!);
 
             if (categoria == null)
             {
-                return BadRequest("Categoria não encontrada ou não pertence ao usuário.");
+                throw new KeyNotFoundException("Categoria não encontrada.");
             }
 
             var movimentacao = await _movimentacaoService.CreateMovimentacao(createMovimentacaoDto);
@@ -118,16 +103,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var movimentacao = await _movimentacaoService.UpdateMovimentacao(id, updateMovimentacaoDto, userId);
+            var movimentacao = await _movimentacaoService.UpdateMovimentacao(id, updateMovimentacaoDto, userId!);
 
             if (movimentacao == null)
             {
-                return NotFound("Gasto não encontrado ou não pertence ao usuário.");
+                throw new KeyNotFoundException($"Movimentação com ID {id} não encontrada.");
             }
 
             return Ok(movimentacao);
@@ -138,16 +118,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var result = await _movimentacaoService.DeleteMovimentacao(id, userId);
+            var result = await _movimentacaoService.DeleteMovimentacao(id, userId!);
 
             if (!result)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Movimentação com ID {id} não encontrada.");
             }
 
             return NoContent();

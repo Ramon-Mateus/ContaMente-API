@@ -23,24 +23,8 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            try
-            {
-                await _recorrenciaService.CancelarRecorrencia(id, userId);
-                return Ok(new { message = "Recorrência cancelada com sucesso" });
-            }
-            catch (UnauthorizedAccessException e)
-            {
-                return Unauthorized(e.Message);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, e.Message);
-            }
+            await _recorrenciaService.CancelarRecorrencia(id, userId!);
+            return Ok(new { message = "Recorrência cancelada com sucesso" });
         }
     }
 }

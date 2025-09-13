@@ -26,12 +26,7 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            return await _parcelaService.GetParcelas(userId);
+            return await _parcelaService.GetParcelas(userId!);
         }
 
         [HttpGet("{id}")]
@@ -39,16 +34,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var parcela = await _parcelaService.GetParcelaById(id, userId);
+            var parcela = await _parcelaService.GetParcelaById(id, userId!);
 
             if (parcela == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Parcela com ID {id} não encontrado.");
             }
 
             return Ok(parcela);
@@ -63,11 +53,6 @@ namespace ContaMente.Controllers
             }
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
 
             var parcela = await _parcelaService.CreateParcela(createParcelaDto);
 
@@ -84,16 +69,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var parcela = await _parcelaService.UpdateParcela(id, createParcelaDto, userId);
+            var parcela = await _parcelaService.UpdateParcela(id, createParcelaDto, userId!);
 
             if (parcela == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Parcela com ID {id} não encontrada.");
             }
 
             return Ok(parcela);
@@ -104,16 +84,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var result = await _movimentacaoParcelaService.DeleteParcela(id, userId);
+            var result = await _movimentacaoParcelaService.DeleteParcela(id, userId!);
 
             if (!result)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Parcela com ID {id} não encontrada.");
             }
 
             return Ok();

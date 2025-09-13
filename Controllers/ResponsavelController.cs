@@ -33,16 +33,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var responsavel = await _responsavelService.GetResponsavelById(id, userId);
+            var responsavel = await _responsavelService.GetResponsavelById(id, userId!);
 
             if (responsavel == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Responsável com ID {id} não encontrado.");
             }
 
             return Ok(responsavel);
@@ -58,12 +53,7 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var responsavel = await _responsavelService.CreateResponsavel(createResponsavelDto, userId);
+            var responsavel = await _responsavelService.CreateResponsavel(createResponsavelDto, userId!);
 
             return CreatedAtAction(nameof(GetResponsavelById), new { id = responsavel.Id }, responsavel);
         }
@@ -78,16 +68,11 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var responsavel = await _responsavelService.UpdateResponsavel(id, updateResponsavelDto, userId);
+            var responsavel = await _responsavelService.UpdateResponsavel(id, updateResponsavelDto, userId!);
 
             if (responsavel == null)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Responsável com ID {id} não encontrado.");
             }
 
             return Ok(responsavel);
@@ -98,16 +83,11 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            if (userId == null)
-            {
-                return Unauthorized("Usuário não autenticado.");
-            }
-
-            var result = await _responsavelService.DeleteResponsavel(id, userId);
+            var result = await _responsavelService.DeleteResponsavel(id, userId!);
 
             if (!result)
             {
-                return NotFound();
+                throw new KeyNotFoundException($"Responsável com ID {id} não encontrado.");
             }
 
             return NoContent();
