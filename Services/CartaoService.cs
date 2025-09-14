@@ -25,6 +25,13 @@ namespace ContaMente.Services
 
         public async Task<Cartao> CreateCartao(CreateUpdateCartaoDto createCartaoDto, string userId)
         {
+            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(createCartaoDto.Apelido, userId);
+
+            if (cartaoExiste)
+            {
+                throw new ArgumentException($"Já existe um cartão com o nome '{createCartaoDto.Apelido}'.");
+            }
+
             var cartao = new Cartao
             {
                 Apelido = createCartaoDto.Apelido,
@@ -44,6 +51,13 @@ namespace ContaMente.Services
                 return null;
             }
 
+            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(updateCartaoDto.Apelido, userId);
+
+            if (cartaoExiste)
+            {
+                throw new ArgumentException($"Já existe um cartão com o nome '{updateCartaoDto.Apelido}'.");
+            }
+            
             cartao.Apelido = updateCartaoDto.Apelido;
             cartao.DiaFechamento = updateCartaoDto.DiaFechamento;
 

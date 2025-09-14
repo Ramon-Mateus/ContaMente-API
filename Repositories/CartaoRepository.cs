@@ -48,5 +48,11 @@ namespace ContaMente.Repositories
 
             return true;
         }
+
+        public async Task<bool> ExisteCartaoComApelido(string apelido, string userId)
+        {
+            return await _context.Cartoes.
+                AnyAsync(c => c.Apelido.ToLower() == apelido.ToLower() && c.UserId == userId);
+        }
     }
 }

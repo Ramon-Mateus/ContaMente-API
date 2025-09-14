@@ -28,6 +28,13 @@ namespace ContaMente.Services
 
         public async Task<Responsavel> CreateResponsavel(CreateUpdateResponsavelDto createResponsavelDto, string userId)
         {
+            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(createResponsavelDto.Nome, userId);
+
+            if (responsavelExiste)
+            {
+                throw new ArgumentException($"Já existe um responsável com o nome '{createResponsavelDto.Nome}'.");
+            }
+
             var responsavel = new Responsavel
             {
                 Nome = createResponsavelDto.Nome,
@@ -46,10 +53,14 @@ namespace ContaMente.Services
                 return null;
             }
 
-            if (!string.IsNullOrEmpty(updateResponsavelDto.Nome))
+            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(updateResponsavelDto.Nome, userId);
+
+            if (responsavelExiste)
             {
-                responsavel.Nome = updateResponsavelDto.Nome;
+                throw new ArgumentException($"Já existe um responsável com o nome '{updateResponsavelDto.Nome}'.");
             }
+
+            responsavel.Nome = updateResponsavelDto.Nome;
 
             return await _responsavelRepository.UpdateResponsavel(responsavel);
         }

@@ -50,5 +50,11 @@ namespace ContaMente.Repositories
 
             return true;
         }
+
+        public async Task<bool> ExisteResponsavelComNome(string nome, string userId)
+        {
+            return await _context.Responsaveis.
+                AnyAsync(r => r.Nome.ToLower() == nome.ToLower() && r.UserId == userId);
+        }
     }
 }
