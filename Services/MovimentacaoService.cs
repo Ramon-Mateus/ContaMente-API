@@ -134,10 +134,10 @@ namespace ContaMente.Services
             else
             {
                 if (mes.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value && m.Categoria!.Entrada == entrada);
 
                 if (ano.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value && m.Categoria!.Entrada == entrada);
             }
         }
 
