@@ -54,7 +54,7 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            var parcela = await _parcelaService.CreateParcela(createParcelaDto);
+            var parcela = await _parcelaService.CreateParcela(createParcelaDto, userId);
 
             return CreatedAtAction(nameof(GetParcelaById), new { id = parcela.Id }, parcela);
         }

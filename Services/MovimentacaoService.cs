@@ -93,19 +93,20 @@ namespace ContaMente.Services
                 {
                     var diaFechamento = cartao.DiaFechamento;
 
-                    // Data de início da fatura (dia do fechamento no mês solicitado)
-                    var dataInicioFatura = new DateTime(ano.Value, mes.Value, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
-
-                    // Data de fim da fatura (um dia antes do fechamento do próximo mês) - UTC
-                    DateTime dataFimFatura;
-                    if (mes.Value == 12)
+                    // Data de início da fatura (dia do fechamento do mês ANTERIOR)
+                    DateTime dataInicioFatura;
+                    
+                    if (mes.Value == 1)
                     {
-                        dataFimFatura = new DateTime(ano.Value + 1, 1, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
+                        dataInicioFatura = new DateTime(ano.Value - 1, 12, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
                     }
                     else
                     {
-                        dataFimFatura = new DateTime(ano.Value, mes.Value + 1, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
+                        dataInicioFatura = new DateTime(ano.Value, mes.Value - 1, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
                     }
+
+                    // Data de fim da fatura (um dia antes do fechamento do mês solicitado)
+                    var dataFimFatura = new DateTime(ano.Value, mes.Value, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
 
                     // Buscar movimentações deste cartão que estão dentro do período da fatura
                     var queryCartao = _queryableMovimentacao!.Where(m => m.CartaoId == cartao.Id &&
