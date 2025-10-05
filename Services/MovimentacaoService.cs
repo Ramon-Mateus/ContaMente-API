@@ -300,7 +300,7 @@ namespace ContaMente.Services
             {
                 Valor = createMovimentacaoDto.Valor,
                 Descricao = createMovimentacaoDto.Descricao,
-                Data = createMovimentacaoDto.Data,
+                Data = createMovimentacaoDto.Data.ToUniversalTime(),
                 Fixa = createMovimentacaoDto.Fixa,
                 CategoriaId = createMovimentacaoDto.CategoriaId,
                 TipoPagamento = (TipoPagamentoEnum)createMovimentacaoDto.TipoPagamentoId,
