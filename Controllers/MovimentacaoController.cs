@@ -24,21 +24,12 @@ namespace ContaMente.Controllers
         public async Task<IActionResult> GetMovimentacoes(
             [FromQuery] int? mes, 
             [FromQuery] int? ano, 
-            [FromQuery] bool entrada,
+            [FromQuery] bool? entrada,
             [FromQuery] List<int> categoriasIds,
             [FromQuery] List<int> tiposPagamentoIds,
             [FromQuery] List<int> responsaveisIds,
             [FromQuery] List<int> cartoesIds)
         {
-            if (mes < 1 || mes > 12)
-                throw new ArgumentException("O mês deve estar entre 1 e 12.");
-
-            if (ano < 1)
-                throw new ArgumentException("Ano inválido.");
-
-            if (!mes.HasValue || !ano.HasValue)
-                throw new ArgumentException("Mês ou ano não especificado.");
-
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
             var movimentacoes = await _movimentacaoService

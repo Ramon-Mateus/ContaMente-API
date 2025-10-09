@@ -42,7 +42,7 @@ namespace ContaMente.Services
             int? mes,
             int? ano,
             string userId,
-            bool entrada,
+            bool? entrada,
             List<int> categoriasIds,
             List<int> tiposPagamentoIds,
             List<int> responsaveisIds,
@@ -71,7 +71,7 @@ namespace ContaMente.Services
             int? mes,
             int? ano,
             string userId,
-            bool entrada)
+            bool? entrada)
         {
             var userConfig = await _userConfigurationService.GetUserConfiguration(userId);
 
@@ -95,7 +95,7 @@ namespace ContaMente.Services
 
                     // Data de início da fatura (dia do fechamento do mês ANTERIOR)
                     DateTime dataInicioFatura;
-                    
+
                     if (mes.Value == 1)
                     {
                         dataInicioFatura = new DateTime(ano.Value - 1, 12, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
@@ -135,10 +135,13 @@ namespace ContaMente.Services
             else
             {
                 if (mes.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value && m.Categoria!.Entrada == entrada);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value);
 
                 if (ano.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value && m.Categoria!.Entrada == entrada);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
+                    
+                if (entrada.HasValue)
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Categoria!.Entrada == entrada.Value);
             }
         }
 
