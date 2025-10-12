@@ -218,7 +218,7 @@ namespace ContaMente.Services
             List<Movimentacao> movimentacoes)
         {
             return movimentacoes
-                .GroupBy(m => m.Data.Date)
+                .GroupBy(m => m.Data.Date.AddDays(1))
                 .ToDictionary(
                     g => g.Key,
                     g => g.Select(MapToMovimentacaoDto).ToList()
