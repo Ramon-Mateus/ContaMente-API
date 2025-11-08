@@ -396,7 +396,36 @@ namespace ContaMente.Services
             movimentacao.ResponsavelId = updateMovimentacaoDto.ResponsavelId;
             movimentacao.CartaoId      = updateMovimentacaoDto.CartaoId;
 
-            return await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
+            if (updateMovimentacaoDto.Fixa.HasValue && updateMovimentacaoDto.Fixa.Value != movimentacao.Fixa)
+            {
+                if (!updateMovimentacaoDto.Fixa.Value)
+                {
+                    await _recorrenciaService.CancelarRecorrencia(movimentacao.RecorrenciaId!.Value, userId);
+                    movimentacao.Fixa = false;
+                    movimentacao.RecorrenciaId = null;
+                }
+                else
+                {
+                    var recorrencia = new Recorrencia
+                    {
+                        DataInicio = DateTime.UtcNow,
+                    };
+
+                    movimentacao.Fixa = true;
+
+                    recorrencia.Movimentacoes.Add(movimentacao);
+                    await _recorrenciaService.CreateRecorrencia(recorrencia);
+
+                    RecurringJob.AddOrUpdate(
+                        $"recorrencia_{recorrencia.Id}",
+                        () => CriarMovimentacaoRecorrente(recorrencia.Id),
+                        "0 0 1 * *"); // A cada 10 segundos: "*/10 * * * * *" // Todo dia primeiro às meia noite: "0 0 1 * *"
+                }
+            }
+            
+            var movimentacaoAtualizada = await _movimentacaoRepository.UpdateMovimentacao(movimentacao);
+
+            return movimentacaoAtualizada;
         }
 
         public async Task<bool> DeleteMovimentacao(int id, string userId)
