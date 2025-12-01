@@ -15,5 +15,8 @@ public enum TipoPagamentoEnum
     Boleto = 4,
 
     [Display(Name = "Débito")]
-    Debito = 5
+    Debito = 5,
+
+    [Display(Name = "Benefício")]
+    Beneficio = 6
 }
