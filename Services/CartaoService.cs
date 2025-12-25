@@ -25,7 +25,7 @@ namespace ContaMente.Services
 
         public async Task<Cartao> CreateCartao(CreateUpdateCartaoDto createCartaoDto, string userId)
         {
-            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(createCartaoDto.Apelido, userId);
+            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(createCartaoDto.Apelido, userId, null);
 
             if (cartaoExiste)
             {
@@ -51,7 +51,7 @@ namespace ContaMente.Services
                 return null;
             }
 
-            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(updateCartaoDto.Apelido, userId);
+            var cartaoExiste = await _cartaoRepository.ExisteCartaoComApelido(updateCartaoDto.Apelido, userId, cartao.Id);
 
             if (cartaoExiste)
             {

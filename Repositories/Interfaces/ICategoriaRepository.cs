@@ -9,5 +9,5 @@ public interface ICategoriaRepository
     Task<Categoria> CreateCategoria(Categoria categoria);
     Task<Categoria?> UpdateCategoria(Categoria categoria);
     Task<bool> DeleteCategoria(Categoria categoria);
-    Task<bool> ExisteCategoriaComNome(string nome, string userId);
+    Task<bool> ExisteCategoriaComNome(string nome, string userId, int? idCategoriaUpdate);
 }

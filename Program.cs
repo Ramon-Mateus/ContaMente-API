@@ -104,8 +104,12 @@ app.UseMiddleware(typeof(GlobalErrorHandlingMiddleware));
 
 app.UseHttpsRedirection();
 
+var corsOrigins = Environment
+    .GetEnvironmentVariable("CORS_ORIGIN")?
+    .Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 app.UseCors(options => options
-    .WithOrigins(Environment.GetEnvironmentVariable("CORS_ORIGIN")!)
+    .WithOrigins(corsOrigins!)
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials()

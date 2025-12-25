@@ -28,7 +28,7 @@ public class CategoriaService : ICategoriaService
 
     public async Task<Categoria> CreateCategoria(CreateCategoriaDto createCategoriaDto, string userId)
     {
-        var categoriaExiste = await _categoriaRepository.ExisteCategoriaComNome(createCategoriaDto.Nome, userId);
+        var categoriaExiste = await _categoriaRepository.ExisteCategoriaComNome(createCategoriaDto.Nome, userId, null);
 
         if (categoriaExiste)
         {
@@ -56,7 +56,7 @@ public class CategoriaService : ICategoriaService
 
         if (!string.IsNullOrEmpty(updateCategoriaDto.Nome))
         {
-            var categoriaExiste = await _categoriaRepository.ExisteCategoriaComNome(updateCategoriaDto.Nome, userId);
+            var categoriaExiste = await _categoriaRepository.ExisteCategoriaComNome(updateCategoriaDto.Nome, userId, categoria.Id);
 
             if (categoriaExiste)
             {

@@ -5,5 +5,5 @@ public interface ICartaoRepository
         Task<Cartao> CreateCartao(Cartao cartao);
         Task<Cartao?> UpdateCartao(Cartao cartao);
         Task<bool> DeleteCartao(Cartao cartao);
-        Task<bool> ExisteCartaoComApelido(string apelido, string userId);
+        Task<bool> ExisteCartaoComApelido(string apelido, string userId, int? idCartaoUpdate);
 }

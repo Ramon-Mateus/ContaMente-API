@@ -51,9 +51,17 @@ public class CategoriaRepository : ICategoriaRepository
         return true;
     }
             
-    public async Task<bool> ExisteCategoriaComNome(string nome, string userId)
+    public async Task<bool> ExisteCategoriaComNome(string nome, string userId, int? idCategoriaUpdate)
     {
-        return await _context.Categorias.
-            AnyAsync(c => c.Nome.ToLower() == nome.ToLower() && c.UserId == userId);
+        if (idCategoriaUpdate == null)
+        {
+            return await _context.Categorias.
+                AnyAsync(c => c.Nome.ToLower() == nome.ToLower() && c.UserId == userId);
+        }
+        else
+        {
+            return await _context.Categorias.
+                AnyAsync(c => c.Nome.ToLower() == nome.ToLower() && c.UserId == userId && c.Id != idCategoriaUpdate);
+        }
     }
 }

@@ -51,10 +51,18 @@ namespace ContaMente.Repositories
             return true;
         }
 
-        public async Task<bool> ExisteResponsavelComNome(string nome, string userId)
+        public async Task<bool> ExisteResponsavelComNome(string nome, string userId, int? idResponsavelUpdate)
         {
-            return await _context.Responsaveis.
-                AnyAsync(r => r.Nome.ToLower() == nome.ToLower() && r.UserId == userId);
+            if (idResponsavelUpdate == null)
+            {
+                return await _context.Responsaveis.
+                    AnyAsync(r => r.Nome.ToLower() == nome.ToLower() && r.UserId == userId);
+            }
+            else
+            {
+                return await _context.Responsaveis.
+                    AnyAsync(r => r.Nome.ToLower() == nome.ToLower() && r.UserId == userId && r.Id != idResponsavelUpdate);
+            }
         }
     }
 }

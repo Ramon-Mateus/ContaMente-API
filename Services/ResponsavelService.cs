@@ -28,7 +28,7 @@ namespace ContaMente.Services
 
         public async Task<Responsavel> CreateResponsavel(CreateUpdateResponsavelDto createResponsavelDto, string userId)
         {
-            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(createResponsavelDto.Nome, userId);
+            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(createResponsavelDto.Nome, userId, null);
 
             if (responsavelExiste)
             {
@@ -53,7 +53,7 @@ namespace ContaMente.Services
                 return null;
             }
 
-            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(updateResponsavelDto.Nome, userId);
+            var responsavelExiste = await _responsavelRepository.ExisteResponsavelComNome(updateResponsavelDto.Nome, userId, responsavel.Id);
 
             if (responsavelExiste)
             {
