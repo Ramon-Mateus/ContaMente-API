@@ -32,6 +32,7 @@ namespace ContaMente.Controllers
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
+            // Isso chama o service
             var movimentacoes = await _movimentacaoService
                 .GetMovimentacoes(
                     mes, 
