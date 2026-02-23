@@ -447,6 +447,11 @@ namespace ContaMente.Services
                 return await _movimentacaoParcelaService.DeleteParcela(movimentacao.Parcela.Id, userId);
             }
 
+            if (movimentacao.RecorrenciaId != null)
+            {
+                await _recorrenciaService.CancelarRecorrencia((int)movimentacao.RecorrenciaId, userId);
+            }
+
             return await _movimentacaoRepository.DeleteMovimentacao(movimentacao);
         }
     }
