@@ -368,6 +368,11 @@ namespace ContaMente.Services
                 return null;
             }
 
+            if (movimentacao.ParcelaId != null)
+            {
+                throw new ArgumentException($"Alteração não permitida para movimentações parcelas. Exclua a movimentação atual e cadastre uma nova!");
+            }
+
             if (updateMovimentacaoDto.Valor.HasValue)
             {
                 movimentacao.Valor = updateMovimentacaoDto.Valor.Value;
