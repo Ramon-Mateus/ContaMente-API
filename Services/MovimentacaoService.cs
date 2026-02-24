@@ -3,6 +3,7 @@ using ContaMente.Models;
 using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
 using Hangfire;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services
@@ -21,7 +22,7 @@ namespace ContaMente.Services
         #endregion
         
         #region Variaveis
-        private IQueryable<Movimentacao>? _queryableMovimentacao;
+        private IQueryable<Movimentacao>? queryableMovimentacao;
         #endregion
         
         public MovimentacaoService(
@@ -43,12 +44,13 @@ namespace ContaMente.Services
             int? ano,
             string userId,
             bool? entrada,
+            bool? parcelada,
             List<int> categoriasIds,
             List<int> tiposPagamentoIds,
             List<int> responsaveisIds,
             List<int> cartoesIds)
         {
-            _queryableMovimentacao = _movimentacaoRepository.GetMovimentacoes(userId);
+            queryableMovimentacao = _movimentacaoRepository.GetMovimentacoes(userId);
             
             await ListagemPorFatura(mes, ano, userId, entrada);
 
@@ -58,7 +60,9 @@ namespace ContaMente.Services
 
             CartoesFiltro(cartoesIds);
 
-            var movimentacoes = await _queryableMovimentacao
+            MovParcelada(parcelada);
+
+            var movimentacoes = await queryableMovimentacao
                 .OrderByDescending(m => m.Data)
                 .ToListAsync();
 
@@ -81,7 +85,7 @@ namespace ContaMente.Services
                 var cartoes = await _cartaoRepository.GetCartoes(userId);
 
                 // Movimentações sem cartão (cartaoId is null) do mês completo
-                var queryMovsSemCartao = _queryableMovimentacao!.Where(m => m.CartaoId == null &&
+                var queryMovsSemCartao = queryableMovimentacao!.Where(m => m.CartaoId == null &&
                                                                                               m.Data.Month == mes.Value &&
                                                                                               m.Data.Year == ano.Value &&
                                                                                               m.Categoria!.Entrada == entrada);
@@ -109,7 +113,7 @@ namespace ContaMente.Services
                     var dataFimFatura = new DateTime(ano.Value, mes.Value, diaFechamento, 0, 0, 0, DateTimeKind.Utc);
 
                     // Buscar movimentações deste cartão que estão dentro do período da fatura
-                    var queryCartao = _queryableMovimentacao!.Where(m => m.CartaoId == cartao.Id &&
+                    var queryCartao = queryableMovimentacao!.Where(m => m.CartaoId == cartao.Id &&
                                                                                             m.Data >= dataInicioFatura &&
                                                                                             m.Data < dataFimFatura
                                                                                             && m.Categoria!.Entrada == entrada);
@@ -125,23 +129,23 @@ namespace ContaMente.Services
                     {
                         queryUnificada = queryUnificada.Union(queryCartao);
                     }
-                    _queryableMovimentacao = queryUnificada;
+                    queryableMovimentacao = queryUnificada;
                 }
                 else
                 {
-                    _queryableMovimentacao = queryMovsSemCartao;
+                    queryableMovimentacao = queryMovsSemCartao;
                 }
             }
             else
             {
                 if (mes.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Month == mes.Value);
+                    queryableMovimentacao = queryableMovimentacao!.Where(m => m.Data.Month == mes.Value);
 
                 if (ano.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
+                    queryableMovimentacao = queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
                     
                 if (entrada.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Categoria!.Entrada == entrada.Value);
+                    queryableMovimentacao = queryableMovimentacao!.Where(m => m.Categoria!.Entrada == entrada.Value);
             }
         }
 
@@ -150,7 +154,7 @@ namespace ContaMente.Services
             List<int> tiposPagamentoIds)
         {
             if (categoriasIds.Count != 0)
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => categoriasIds.Contains(m.CategoriaId));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => categoriasIds.Contains(m.CategoriaId));
 
             if (tiposPagamentoIds.Count != 0)
             {
@@ -158,7 +162,7 @@ namespace ContaMente.Services
                     .Select(id => (TipoPagamentoEnum)id)
                     .ToList();
 
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => tiposPagamento.Contains(m.TipoPagamento));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => tiposPagamento.Contains(m.TipoPagamento));
             }
         }
 
@@ -171,20 +175,20 @@ namespace ContaMente.Services
 
             if (filtrarResponsavelPorNulo && outrosResponsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId == null ||
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ResponsavelId == null ||
                                                                            (m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value)));
             }
             else if (filtrarResponsavelPorNulo)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId == null);
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ResponsavelId == null);
             }
             else if (outrosResponsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && outrosResponsaveisIds.Contains(m.ResponsavelId.Value));
             }
             else if (responsaveisIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ResponsavelId.HasValue && responsaveisIds.Contains(m.ResponsavelId.Value));
             }
         }
 
@@ -197,20 +201,32 @@ namespace ContaMente.Services
 
             if (filtrarCartaoPorNulo && outrosCartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId == null ||
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.CartaoId == null ||
                                                                            (m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value)));
             }
             else if (filtrarCartaoPorNulo)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId == null);
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.CartaoId == null);
             }
             else if (outrosCartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.CartaoId.HasValue && outrosCartoesIds.Contains(m.CartaoId.Value));
             }
             else if (cartoesIds.Count > 0)
             {
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.CartaoId.HasValue && cartoesIds.Contains(m.CartaoId.Value));
+            }
+        }
+
+        private void MovParcelada(bool? parcelada)
+        {
+            if (parcelada is true)
+            {
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ParcelaId != null);
+            }
+            else if (parcelada is false)
+            {
+                queryableMovimentacao = queryableMovimentacao!.Where(m => m.ParcelaId == null);
             }
         }
 
@@ -224,7 +240,7 @@ namespace ContaMente.Services
                     g => g.Select(MapToMovimentacaoDto).ToList()
                 );
         }
-        
+
         public async Task<MovimentacaoDto?> GetMovimentacaoById(int id, string userId)
         {
             var mov = await _movimentacaoRepository.GetMovimentacaoById(id, userId);
