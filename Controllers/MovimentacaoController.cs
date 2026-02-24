@@ -22,9 +22,10 @@ namespace ContaMente.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetMovimentacoes(
-            [FromQuery] int? mes, 
-            [FromQuery] int? ano, 
+            [FromQuery] int? mes,
+            [FromQuery] int? ano,
             [FromQuery] bool? entrada,
+            [FromQuery] bool? parcelada,
             [FromQuery] List<int> categoriasIds,
             [FromQuery] List<int> tiposPagamentoIds,
             [FromQuery] List<int> responsaveisIds,
@@ -37,7 +38,8 @@ namespace ContaMente.Controllers
                     mes, 
                     ano, 
                     userId!, 
-                    entrada, 
+                    entrada,
+                    parcelada,
                     categoriasIds, 
                     tiposPagamentoIds,
                     responsaveisIds,
