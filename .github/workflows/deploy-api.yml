@@ -32,6 +32,9 @@ jobs:
           source: "api.zip"
           target: "/tmp"
 
+      - name: Pausa para não bloquear o Firewall
+        run: sleep 10
+
       - name: Atualizar e Reiniciar a API
         uses: appleboy/ssh-action@master
         with:
