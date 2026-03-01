@@ -1,0 +1,57 @@
+name: Deploy API
+
+on:
+  push:
+    branches: ["master"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar o .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publicar a API
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Zipar os arquivos
+        run: cd publish && zip -r ../api.zip .
+
+      - name: Enviar Zip para o Servidor (Via SSH)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "api.zip"
+          target: "/tmp"
+
+      - name: Atualizar e Reiniciar a API
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Parar o serviço para não dar erro de arquivo em uso
+            sudo systemctl stop contamente-api.service
+
+            # 2. Criar a pasta caso não exista e limpar a versão velha
+            sudo mkdir -p /var/www/contamente-api
+            sudo rm -rf /var/www/contamente-api/*
+
+            # 3. Descompactar a versão nova na pasta e apagar o zip
+            sudo unzip -o /tmp/api.zip -d /var/www/contamente-api
+            sudo rm /tmp/api.zip
+
+            # 4. Ajustar as permissões para o serviço conseguir ler os arquivos
+            sudo chown -R www-data:www-data /var/www/contamente-api
+
+            # 5. Ligar a API novamente
+            sudo systemctl start contamente-api.service
