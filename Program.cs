@@ -10,12 +10,14 @@ using DotNetEnv;
 using Hangfire;
 using Hangfire.PostgreSql;
 using ContaMente.Middlewares;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL") 
+                       ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddHangfire(config =>
 config.UsePostgreSqlStorage(c =>
@@ -42,6 +44,16 @@ builder.Services.AddScoped<IUserConfigurationRepository, UserConfigurationReposi
 builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
 builder.Services.AddScoped<IMovimentacaoParcelaService, MovimentacaoParcelaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IContaPagarService, ContaPagarService>();
+builder.Services.AddScoped<IContaPagarRepository, ContaPagarRepository>();
+builder.Services.AddScoped<IContaReceberService, ContaReceberService>();
+builder.Services.AddScoped<IContaReceberRepository, ContaReceberRepository>();
+builder.Services.AddHttpClient("BrasilApi", client =>
+{
+    client.BaseAddress = new Uri("https://brasilapi.com.br/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+builder.Services.AddSingleton<IFeriadoService, FeriadoService>();
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -96,8 +108,8 @@ app.UseHangfireDashboard();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapSwagger("/openapi/{documentName}.json");
+    app.MapScalarApiReference();
 }
 
 app.UseMiddleware(typeof(GlobalErrorHandlingMiddleware));

@@ -12,6 +12,7 @@ public class MovimentacaoDto
         public TipoPagamentoDto? TipoPagamento { get; set; }
         public ResponsavelDto? Responsavel { get; set; }
         public CategoriaDto? Categoria { get; set; }
+        public List<CategoriaRateioDetalheDto> Categorias { get; set; } = new();
         public RecorrenciaDto? Recorrencia { get; set; }
         public ParcelaDto? Parcela { get; set; }
         public CartaoDto? Cartao { get; set; }

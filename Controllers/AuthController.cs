@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ContaMente.DTOs;
 using ContaMente.Models;
 using ContaMente.Services.Interfaces;
@@ -117,6 +118,7 @@ namespace ContaMente.Controllers
         }
 
         [HttpGet("getUser")]
+        [Authorize]
         public async Task<IActionResult> getUser()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -132,6 +134,45 @@ namespace ContaMente.Controllers
             {
                 return NotFound("Usuário não encontrado.");
             }
+
+            return Ok(new
+            {
+                user.Id,
+                user.Name,
+                user.Email
+            });
+        }
+
+        [HttpPut("updateUser")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser([FromBody] UpdateUserProfileDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (userId == null)
+                return Unauthorized("Usuário não autenticado.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound("Usuário não encontrado.");
+
+            var name = model.Name.Trim();
+
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest("O nome é obrigatório.");
+
+            user.Name = name;
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+                return BadRequest(result.Errors);
+
+            await _signInManager.RefreshSignInAsync(user);
 
             return Ok(new
             {

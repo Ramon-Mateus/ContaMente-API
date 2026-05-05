@@ -72,14 +72,20 @@ namespace ContaMente.Controllers
 
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-            var categoria = await _categoriaService.GetCategoriaById(createMovimentacaoDto.CategoriaId, userId!);
+            var categoriaId = createMovimentacaoDto.CategoriaId ?? createMovimentacaoDto.Categorias?.FirstOrDefault()?.CategoriaId;
+            if (!categoriaId.HasValue)
+            {
+                return BadRequest("Informe pelo menos uma categoria.");
+            }
+
+            var categoria = await _categoriaService.GetCategoriaById(categoriaId.Value, userId!);
 
             if (categoria == null)
             {
                 throw new KeyNotFoundException("Categoria não encontrada.");
             }
 
-            var movimentacao = await _movimentacaoService.CreateMovimentacao(createMovimentacaoDto);
+            var movimentacao = await _movimentacaoService.CreateMovimentacao(createMovimentacaoDto, userId!);
 
             return CreatedAtAction(nameof(GetMovimentacaoById), new { id = movimentacao.Id }, movimentacao);
         }

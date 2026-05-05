@@ -14,8 +14,8 @@ namespace ContaMente.DTOs
         public int? NumeroParcela { get; set; }
         [Required]
         public bool Fixa { get; set; }
-        [Required]
-        public int CategoriaId { get; set; }
+        public int? CategoriaId { get; set; }
+        public List<CategoriaRateioDto>? Categorias { get; set; }
         [Required]
         public int TipoPagamentoId { get; set; }
         public int? ParcelaId { get; set; }

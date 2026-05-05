@@ -26,5 +26,8 @@ namespace ContaMente.Models
         [JsonIgnore]
         public int? ParcelaId { get; set; }
         public Parcela? Parcela { get; set; }
+        public List<ContaPagarMovimentacao> ContasPagar { get; set; } = new();
+        public List<ContaReceberMovimentacao> ContasReceber { get; set; } = new();
+        public List<MovimentacaoCategoria> CategoriasRateio { get; set; } = new();
     }
 }

@@ -3,9 +3,10 @@
     "http": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "swagger",
+      "launchUrl": "scalar/v1",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "CORS_ORIGIN": "http://localhost:3000,http://localhost:4200"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5110"

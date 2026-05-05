@@ -1,4 +1,5 @@
 ﻿using ContaMente.DTOs;
+using ContaMente.Contexts;
 using ContaMente.Models;
 using ContaMente.Repositories.Interfaces;
 using ContaMente.Services.Interfaces;
@@ -18,6 +19,7 @@ namespace ContaMente.Services
         #region Repositories
         private readonly IMovimentacaoRepository _movimentacaoRepository;
         private readonly ICartaoRepository _cartaoRepository;
+        private readonly ApplicationDbContext _context;
         #endregion
         
         #region Variaveis
@@ -29,13 +31,15 @@ namespace ContaMente.Services
             IRecorrenciaService recorrenciaService,
             IMovimentacaoParcelaService movimentacaoParcelaService,
             IUserConfigurationService userConfigurationService,
-            ICartaoRepository cartaoRepository)
+            ICartaoRepository cartaoRepository,
+            ApplicationDbContext context)
         {
             _movimentacaoRepository = movimentacaoRepository;
             _recorrenciaService = recorrenciaService;
             _movimentacaoParcelaService = movimentacaoParcelaService;
             _userConfigurationService = userConfigurationService;
             _cartaoRepository = cartaoRepository;
+            _context = context;
         }
 
         public async Task<Dictionary<DateTime, List<MovimentacaoDto>>> GetMovimentacoes(
@@ -82,9 +86,11 @@ namespace ContaMente.Services
 
                 // Movimentações sem cartão (cartaoId is null) do mês completo
                 var queryMovsSemCartao = _queryableMovimentacao!.Where(m => m.CartaoId == null &&
-                                                                                              m.Data.Month == mes.Value &&
-                                                                                              m.Data.Year == ano.Value &&
-                                                                                              m.Categoria!.Entrada == entrada);
+                                                                            m.Data.Month == mes.Value &&
+                                                                            m.Data.Year == ano.Value);
+
+                if (entrada.HasValue)
+                    queryMovsSemCartao = queryMovsSemCartao.Where(m => m.CategoriasRateio.Any(c => c.Categoria.Entrada == entrada.Value));
 
                 // Para cada cartão, aplicar a lógica de fatura
                 var queriesMovsComCartao = new List<IQueryable<Movimentacao>>();
@@ -110,9 +116,11 @@ namespace ContaMente.Services
 
                     // Buscar movimentações deste cartão que estão dentro do período da fatura
                     var queryCartao = _queryableMovimentacao!.Where(m => m.CartaoId == cartao.Id &&
-                                                                                            m.Data >= dataInicioFatura &&
-                                                                                            m.Data < dataFimFatura
-                                                                                            && m.Categoria!.Entrada == entrada);
+                                                                         m.Data >= dataInicioFatura &&
+                                                                         m.Data < dataFimFatura);
+
+                    if (entrada.HasValue)
+                        queryCartao = queryCartao.Where(m => m.CategoriasRateio.Any(c => c.Categoria.Entrada == entrada.Value));
 
                     queriesMovsComCartao.Add(queryCartao);
                 }
@@ -141,7 +149,7 @@ namespace ContaMente.Services
                     _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Data.Year == ano.Value);
                     
                 if (entrada.HasValue)
-                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.Categoria!.Entrada == entrada.Value);
+                    _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CategoriasRateio.Any(c => c.Categoria.Entrada == entrada.Value));
             }
         }
 
@@ -150,7 +158,7 @@ namespace ContaMente.Services
             List<int> tiposPagamentoIds)
         {
             if (categoriasIds.Count != 0)
-                _queryableMovimentacao = _queryableMovimentacao!.Where(m => categoriasIds.Contains(m.CategoriaId));
+                _queryableMovimentacao = _queryableMovimentacao!.Where(m => m.CategoriasRateio.Any(c => categoriasIds.Contains(c.CategoriaId)));
 
             if (tiposPagamentoIds.Count != 0)
             {
@@ -267,6 +275,11 @@ namespace ContaMente.Services
                         Entrada = m.Categoria.Entrada
                     }
                     : null,
+                Categorias = CategoriaRateioHelper.MapearDetalhes(
+                    m.CategoriasRateio,
+                    r => r.Categoria,
+                    r => r.Valor,
+                    r => r.Percentual),
                 Recorrencia = m.Recorrencia != null
                     ? new RecorrenciaDto
                     {
@@ -297,20 +310,36 @@ namespace ContaMente.Services
             };
         }
 
-        public async Task<Movimentacao> CreateMovimentacao(CreateMovimentacaoDto createMovimentacaoDto)
+        public async Task<Movimentacao> CreateMovimentacao(CreateMovimentacaoDto createMovimentacaoDto, string userId)
         {
+            var entradaEsperada = await ObterEntradaEsperada(createMovimentacaoDto.Categorias, createMovimentacaoDto.CategoriaId, userId);
+            var rateios = await CategoriaRateioHelper.CalcularRateio(
+                _context,
+                createMovimentacaoDto.Categorias,
+                createMovimentacaoDto.CategoriaId,
+                (decimal)createMovimentacaoDto.Valor,
+                userId,
+                entradaEsperada);
+            var categoriaPrincipal = rateios.First().Categoria;
+
             var movimentacao = new Movimentacao
             {
                 Valor = createMovimentacaoDto.Valor,
                 Descricao = createMovimentacaoDto.Descricao,
                 Data = createMovimentacaoDto.Data.ToUniversalTime(),
                 Fixa = createMovimentacaoDto.Fixa,
-                CategoriaId = createMovimentacaoDto.CategoriaId,
+                CategoriaId = categoriaPrincipal.Id,
                 TipoPagamento = (TipoPagamentoEnum)createMovimentacaoDto.TipoPagamentoId,
                 ParcelaId = createMovimentacaoDto.ParcelaId,
                 NumeroParcela = createMovimentacaoDto.NumeroParcela,
                 ResponsavelId = createMovimentacaoDto.ResponsavelId,
-                CartaoId = createMovimentacaoDto.CartaoId
+                CartaoId = createMovimentacaoDto.CartaoId,
+                CategoriasRateio = rateios.Select(r => new MovimentacaoCategoria
+                {
+                    CategoriaId = r.Categoria.Id,
+                    Valor = r.Valor,
+                    Percentual = r.Percentual
+                }).ToList()
             };
 
             var createdMovimentacao = await _movimentacaoRepository.CreateMovimentacao(movimentacao);
@@ -352,11 +381,30 @@ namespace ContaMente.Services
                     TipoPagamento = movimentacaoOriginal.TipoPagamento,
                     RecorrenciaId = recorrencia.Id,
                     ResponsavelId = movimentacaoOriginal.ResponsavelId,
-                    CartaoId = movimentacaoOriginal.CartaoId
+                    CartaoId = movimentacaoOriginal.CartaoId,
+                    CategoriasRateio = movimentacaoOriginal.CategoriasRateio.Select(r => new MovimentacaoCategoria
+                    {
+                        CategoriaId = r.CategoriaId,
+                        Valor = r.Valor,
+                        Percentual = r.Percentual
+                    }).ToList()
                 };
 
                 await _movimentacaoRepository.CreateMovimentacao(novaMovimentacao);
             }
+        }
+
+        private async Task<bool> ObterEntradaEsperada(List<CategoriaRateioDto>? categorias, int? categoriaId, string userId)
+        {
+            var id = categorias?.FirstOrDefault()?.CategoriaId ?? categoriaId;
+            if (!id.HasValue)
+                throw new ArgumentException("Informe pelo menos uma categoria.");
+
+            var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.Id == id.Value && c.UserId == userId);
+            if (categoria == null)
+                throw new KeyNotFoundException($"Categoria com ID {id.Value} não encontrada.");
+
+            return categoria.Entrada;
         }
 
         public async Task<Movimentacao?> UpdateMovimentacao(int id, UpdateMovimentacaoDto updateMovimentacaoDto, string userId)
@@ -368,9 +416,14 @@ namespace ContaMente.Services
                 return null;
             }
 
+            var novoValor = updateMovimentacaoDto.Valor ?? movimentacao.Valor;
+            await ValidarEAtualizarBaixasVinculadas(movimentacao, (decimal)novoValor);
+
             if (updateMovimentacaoDto.Valor.HasValue)
             {
                 movimentacao.Valor = updateMovimentacaoDto.Valor.Value;
+                if (updateMovimentacaoDto.CategoriaId == null && updateMovimentacaoDto.Categorias == null)
+                    RecalcularRateioExistente(movimentacao.CategoriasRateio, (decimal)movimentacao.Valor);
             }
 
             if (updateMovimentacaoDto.Data.HasValue)
@@ -383,9 +436,28 @@ namespace ContaMente.Services
                 movimentacao.Descricao = updateMovimentacaoDto.Descricao;
             }
 
-            if (updateMovimentacaoDto.CategoriaId.HasValue)
+            if (updateMovimentacaoDto.CategoriaId.HasValue || updateMovimentacaoDto.Categorias?.Count > 0)
             {
-                movimentacao.CategoriaId = updateMovimentacaoDto.CategoriaId.Value;
+                if (movimentacao.ContasPagar.Count > 0 || movimentacao.ContasReceber.Count > 0)
+                    throw new InvalidOperationException("Não é permitido alterar categorias de movimentação originada de baixa de duplicata.");
+
+                var rateios = await CategoriaRateioHelper.CalcularRateio(
+                    _context,
+                    updateMovimentacaoDto.Categorias,
+                    updateMovimentacaoDto.CategoriaId ?? movimentacao.CategoriaId,
+                    (decimal)(updateMovimentacaoDto.Valor ?? movimentacao.Valor),
+                    userId,
+                    entradaEsperada: movimentacao.Categoria!.Entrada);
+
+                movimentacao.CategoriaId = rateios.First().Categoria.Id;
+                _context.MovimentacoesCategorias.RemoveRange(movimentacao.CategoriasRateio);
+                movimentacao.CategoriasRateio = rateios.Select(r => new MovimentacaoCategoria
+                {
+                    MovimentacaoId = movimentacao.Id,
+                    CategoriaId = r.Categoria.Id,
+                    Valor = r.Valor,
+                    Percentual = r.Percentual
+                }).ToList();
             }
 
             if (updateMovimentacaoDto.TipoPagamentoId.HasValue)
@@ -442,7 +514,157 @@ namespace ContaMente.Services
                 return await _movimentacaoParcelaService.DeleteParcela(movimentacao.Parcela.Id, userId);
             }
 
+            await RemoverBaixasVinculadas(movimentacao);
+
             return await _movimentacaoRepository.DeleteMovimentacao(movimentacao);
+        }
+
+        private async Task ValidarEAtualizarBaixasVinculadas(Movimentacao movimentacao, decimal novoValor)
+        {
+            var vinculosPagar = await _context.ContasPagarMovimentacoes
+                .Include(v => v.ContaPagar)
+                .Where(v => v.MovimentacaoId == movimentacao.Id)
+                .ToListAsync();
+
+            var vinculosReceber = await _context.ContasReceberMovimentacoes
+                .Include(v => v.ContaReceber)
+                .Where(v => v.MovimentacaoId == movimentacao.Id)
+                .ToListAsync();
+
+            if (vinculosPagar.Any(v => v.ContaPagar.Status == StatusDuplicataEnum.Paga) ||
+                vinculosReceber.Any(v => v.ContaReceber.Status == StatusDuplicataEnum.Paga))
+            {
+                throw new InvalidOperationException("Não é permitido alterar movimentação vinculada a uma duplicata paga. Exclua a baixa antes de editar.");
+            }
+
+            foreach (var vinculo in vinculosPagar)
+            {
+                if (vinculo.ContaPagar.Status != StatusDuplicataEnum.Parcial)
+                    throw new InvalidOperationException("Só é permitido alterar movimentações de duplicatas com status Parcial.");
+
+                if (novoValor > vinculo.ContaPagar.ValorParcela)
+                    throw new ArgumentException("O valor da movimentação não pode ser maior que o valor da duplicata.");
+
+                vinculo.ValorBaixado = novoValor;
+                var valorBaixado = await _context.ContasPagarMovimentacoes
+                    .Where(v => v.ContaPagarId == vinculo.ContaPagarId && v.MovimentacaoId != vinculo.MovimentacaoId)
+                    .SumAsync(v => v.ValorBaixado);
+                AplicarStatus(vinculo.ContaPagar, valorBaixado + novoValor);
+            }
+
+            foreach (var vinculo in vinculosReceber)
+            {
+                if (vinculo.ContaReceber.Status != StatusDuplicataEnum.Parcial)
+                    throw new InvalidOperationException("Só é permitido alterar movimentações de duplicatas com status Parcial.");
+
+                if (novoValor > vinculo.ContaReceber.ValorParcela)
+                    throw new ArgumentException("O valor da movimentação não pode ser maior que o valor da duplicata.");
+
+                vinculo.ValorBaixado = novoValor;
+                var valorBaixado = await _context.ContasReceberMovimentacoes
+                    .Where(v => v.ContaReceberId == vinculo.ContaReceberId && v.MovimentacaoId != vinculo.MovimentacaoId)
+                    .SumAsync(v => v.ValorBaixado);
+                AplicarStatus(vinculo.ContaReceber, valorBaixado + novoValor);
+            }
+        }
+
+        private async Task RemoverBaixasVinculadas(Movimentacao movimentacao)
+        {
+            var vinculosPagar = await _context.ContasPagarMovimentacoes
+                .Include(v => v.ContaPagar)
+                .Where(v => v.MovimentacaoId == movimentacao.Id)
+                .ToListAsync();
+
+            var vinculosReceber = await _context.ContasReceberMovimentacoes
+                .Include(v => v.ContaReceber)
+                .Where(v => v.MovimentacaoId == movimentacao.Id)
+                .ToListAsync();
+
+            foreach (var vinculo in vinculosPagar)
+            {
+                _context.ContasPagarMovimentacoes.Remove(vinculo);
+                await RecalcularContaPagar(vinculo.ContaPagar, vinculo.MovimentacaoId);
+            }
+
+            foreach (var vinculo in vinculosReceber)
+            {
+                _context.ContasReceberMovimentacoes.Remove(vinculo);
+                await RecalcularContaReceber(vinculo.ContaReceber, vinculo.MovimentacaoId);
+            }
+
+            if (vinculosPagar.Count > 0 || vinculosReceber.Count > 0)
+                await _context.SaveChangesAsync();
+        }
+
+        private async Task RecalcularContaPagar(ContaPagar conta, int? movimentacaoIgnoradaId = null)
+        {
+            var valorBaixado = await _context.ContasPagarMovimentacoes
+                .Where(v => v.ContaPagarId == conta.Id && (!movimentacaoIgnoradaId.HasValue || v.MovimentacaoId != movimentacaoIgnoradaId.Value))
+                .SumAsync(v => v.ValorBaixado);
+
+            conta.ValorBaixado = Math.Min(valorBaixado, conta.ValorParcela);
+            conta.ValorRestante = Math.Max(conta.ValorParcela - conta.ValorBaixado, 0);
+            conta.Status = conta.ValorBaixado <= 0
+                ? StatusDuplicataEnum.Aberta
+                : conta.ValorRestante > 0
+                    ? StatusDuplicataEnum.Parcial
+                    : StatusDuplicataEnum.Paga;
+            conta.DataPagamento = conta.Status == StatusDuplicataEnum.Paga ? DateTime.UtcNow : null;
+        }
+
+        private async Task RecalcularContaReceber(ContaReceber conta, int? movimentacaoIgnoradaId = null)
+        {
+            var valorBaixado = await _context.ContasReceberMovimentacoes
+                .Where(v => v.ContaReceberId == conta.Id && (!movimentacaoIgnoradaId.HasValue || v.MovimentacaoId != movimentacaoIgnoradaId.Value))
+                .SumAsync(v => v.ValorBaixado);
+
+            conta.ValorBaixado = Math.Min(valorBaixado, conta.ValorParcela);
+            conta.ValorRestante = Math.Max(conta.ValorParcela - conta.ValorBaixado, 0);
+            conta.Status = conta.ValorBaixado <= 0
+                ? StatusDuplicataEnum.Aberta
+                : conta.ValorRestante > 0
+                    ? StatusDuplicataEnum.Parcial
+                    : StatusDuplicataEnum.Paga;
+            conta.DataPagamento = conta.Status == StatusDuplicataEnum.Paga ? DateTime.UtcNow : null;
+        }
+
+        private static void AplicarStatus(ContaPagar conta, decimal valorBaixado)
+        {
+            conta.ValorBaixado = Math.Min(valorBaixado, conta.ValorParcela);
+            conta.ValorRestante = Math.Max(conta.ValorParcela - conta.ValorBaixado, 0);
+            conta.Status = conta.ValorBaixado <= 0
+                ? StatusDuplicataEnum.Aberta
+                : conta.ValorRestante > 0
+                    ? StatusDuplicataEnum.Parcial
+                    : StatusDuplicataEnum.Paga;
+            conta.DataPagamento = conta.Status == StatusDuplicataEnum.Paga ? DateTime.UtcNow : null;
+        }
+
+        private static void AplicarStatus(ContaReceber conta, decimal valorBaixado)
+        {
+            conta.ValorBaixado = Math.Min(valorBaixado, conta.ValorParcela);
+            conta.ValorRestante = Math.Max(conta.ValorParcela - conta.ValorBaixado, 0);
+            conta.Status = conta.ValorBaixado <= 0
+                ? StatusDuplicataEnum.Aberta
+                : conta.ValorRestante > 0
+                    ? StatusDuplicataEnum.Parcial
+                    : StatusDuplicataEnum.Paga;
+            conta.DataPagamento = conta.Status == StatusDuplicataEnum.Paga ? DateTime.UtcNow : null;
+        }
+
+        private static void RecalcularRateioExistente(List<MovimentacaoCategoria> rateios, decimal novoTotal)
+        {
+            decimal acumulado = 0;
+
+            for (var i = 0; i < rateios.Count; i++)
+            {
+                var valor = i == rateios.Count - 1
+                    ? novoTotal - acumulado
+                    : Math.Round(novoTotal * rateios[i].Percentual / 100, 2, MidpointRounding.AwayFromZero);
+
+                acumulado += valor;
+                rateios[i].Valor = valor;
+            }
         }
     }
 }

@@ -69,7 +69,7 @@ namespace ContaMente.Services
                     CartaoId = createParcelaDto.CartaoId
                 };
 
-                await _movimentacaoService.CreateMovimentacao(movimentacaoParcela);
+            await _movimentacaoService.CreateMovimentacao(movimentacaoParcela, userId);
 
                 DateTime dataProximaMov = createParcelaDto.DataInicio.Day >= cartao.DiaFechamento
                     ? new DateTime(createParcelaDto.DataInicio.Year, createParcelaDto.DataInicio.Month, cartao.DiaFechamento).AddMonths(1)
@@ -91,7 +91,7 @@ namespace ContaMente.Services
                         CartaoId = createParcelaDto.CartaoId
                     };
 
-                    await _movimentacaoService.CreateMovimentacao(movimentacaoParcela);
+                await _movimentacaoService.CreateMovimentacao(movimentacaoParcela, userId);
 
                     dataProximaMov = dataProximaMov.AddMonths(1);
                 }
@@ -116,7 +116,7 @@ namespace ContaMente.Services
                         CartaoId = createParcelaDto.CartaoId
                     };
 
-                    await _movimentacaoService.CreateMovimentacao(movimentacaoParcela);
+                await _movimentacaoService.CreateMovimentacao(movimentacaoParcela, userId);
                 }
             }
 
