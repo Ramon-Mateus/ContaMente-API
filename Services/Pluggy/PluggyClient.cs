@@ -71,6 +71,8 @@ namespace ContaMente.Services.Pluggy
         public int? InstallmentNumber { get; set; }
         public int? TotalInstallments { get; set; }
         public string? CardNumber { get; set; }
+        public DateTime? PurchaseDate { get; set; }
+        public double? TotalAmount { get; set; }
     }
 
     public class PluggyApiMerchant

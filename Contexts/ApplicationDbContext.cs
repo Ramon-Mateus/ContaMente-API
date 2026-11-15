@@ -75,6 +75,8 @@ namespace ContaMente.Contexts
             {
                 e.HasIndex(t => new { t.UserId, t.PluggyTransactionId }).IsUnique();
                 e.HasIndex(t => new { t.UserId, t.Status });
+                e.HasIndex(t => new { t.UserId, t.ChaveCompra });
+                e.HasOne(t => t.Parcela).WithMany().HasForeignKey(t => t.ParcelaId).OnDelete(DeleteBehavior.SetNull);
                 e.Property(t => t.Descricao).HasMaxLength(255);
                 e.Property(t => t.Status).HasConversion<int>();
                 e.HasOne(t => t.User).WithMany().HasForeignKey(t => t.UserId).OnDelete(DeleteBehavior.Cascade);
