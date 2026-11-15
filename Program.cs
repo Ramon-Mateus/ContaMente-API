@@ -96,6 +96,20 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+// Em produção (RUN_MIGRATIONS=true) a API aplica as migrations pendentes ao subir,
+// já que o deploy via Watchtower só troca a imagem.
+if (string.Equals(Environment.GetEnvironmentVariable("RUN_MIGRATIONS"), "true", StringComparison.OrdinalIgnoreCase))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ContaMente.Contexts.ApplicationDbContext>();
+    var pendentes = db.Database.GetPendingMigrations().ToList();
+    if (pendentes.Count > 0)
+    {
+        app.Logger.LogInformation("Aplicando migrations: {Migrations}", string.Join(", ", pendentes));
+        db.Database.Migrate();
+    }
+}
+
 app.UseHangfireDashboard();
 
 if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PLUGGY_CLIENT_ID")))
