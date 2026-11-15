@@ -24,12 +24,18 @@ public class TransacaoPendente
     public string? CategoriaPluggy { get; set; }
     public int? NumeroParcela { get; set; }
     public int? TotalParcelas { get; set; }
+    // Compras parceladas: todas as parcelas de uma compra viram um único registro identificado por esta chave.
+    public string? ChaveCompra { get; set; }
+    public double? ValorTotal { get; set; }
     public bool Pendente { get; set; } // status "PENDING" no Pluggy (ainda não lançada na fatura)
     public StatusTransacaoPendente Status { get; set; } = StatusTransacaoPendente.Pendente;
     public DateTime ImportadaEm { get; set; } = DateTime.UtcNow;
     public int? MovimentacaoId { get; set; }
     [JsonIgnore]
     public Movimentacao? Movimentacao { get; set; }
+    public int? ParcelaId { get; set; }
+    [JsonIgnore]
+    public Parcela? Parcela { get; set; }
     [JsonIgnore]
     public string UserId { get; set; } = string.Empty;
     [JsonIgnore]

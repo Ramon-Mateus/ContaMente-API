@@ -80,25 +80,37 @@ namespace ContaMente.Services.Pluggy
                 conta.Numero = contaApi.Number;
 
                 var transacoes = await _pluggy.GetTransactions(contaApi.Id, desde);
-                await ImportarTransacoes(item.UserId, conta, transacoes, desde);
+                var inicioImportacao = item.CriadoEm.AddDays(-DiasImportacaoInicial).Date;
+                await ImportarAVista(item.UserId, conta, transacoes, desde);
+                await ImportarParceladas(item.UserId, conta, transacoes, inicioImportacao);
             }
 
             item.UltimaSincronizacao = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 
-        private async Task ImportarTransacoes(string userId, PluggyConta conta, List<PluggyApiTransaction> transacoes, DateTime desde)
+        private static bool EhSaida(PluggyApiTransaction t) =>
+            string.Equals(t.Type, "DEBIT", StringComparison.OrdinalIgnoreCase) && t.Amount != 0;
+
+        private static bool EhParcelada(PluggyApiTransaction t) => (t.CreditCardMetadata?.TotalInstallments ?? 1) > 1;
+
+        private static string Descricao(PluggyApiTransaction t)
+        {
+            var d = (t.Merchant?.Name ?? t.Description ?? t.DescriptionRaw ?? "Compra no cartão").Trim();
+            return d.Length > 255 ? d[..255] : d;
+        }
+
+        // Compras à vista: uma transação do Pluggy = um registro.
+        private async Task ImportarAVista(string userId, PluggyConta conta, List<PluggyApiTransaction> transacoes, DateTime desde)
         {
             // Só saídas (compras). Pagamentos de fatura e estornos vêm como CREDIT.
-            // Parcelas futuras já vêm com a data da fatura em que vão cair; entram quando a data chegar.
             var limite = DateTime.UtcNow.Date.AddDays(1);
             var saidas = transacoes
-                .Where(t => string.Equals(t.Type, "DEBIT", StringComparison.OrdinalIgnoreCase) && t.Amount != 0)
-                .Where(t => t.Date < limite)
+                .Where(t => EhSaida(t) && !EhParcelada(t) && t.Date < limite)
                 .ToList();
 
             var existentes = await _context.TransacoesPendentes
-                .Where(t => t.UserId == userId && t.PluggyAccountId == conta.PluggyAccountId && t.Data >= desde.AddDays(-10))
+                .Where(t => t.UserId == userId && t.PluggyAccountId == conta.PluggyAccountId && t.ChaveCompra == null && t.Data >= desde.AddDays(-10))
                 .ToListAsync();
 
             var porId = existentes.ToDictionary(t => t.PluggyTransactionId);
@@ -110,17 +122,15 @@ namespace ContaMente.Services.Pluggy
                 .Where(t => t.Pendente && !idsRecebidos.Contains(t.PluggyTransactionId))
                 .ToList();
 
-            var idsJaImportados = await _context.TransacoesPendentes
+            var jaImportados = (await _context.TransacoesPendentes
                 .Where(t => t.UserId == userId && idsRecebidos.Contains(t.PluggyTransactionId))
                 .Select(t => t.PluggyTransactionId)
-                .ToListAsync();
-            var jaImportados = idsJaImportados.ToHashSet();
+                .ToListAsync()).ToHashSet();
 
             foreach (var t in saidas)
             {
                 var valor = Math.Round(Math.Abs(t.Amount), 2);
                 var data = DateTime.SpecifyKind(t.Date, DateTimeKind.Utc);
-                var descricao = (t.Merchant?.Name ?? t.Description ?? t.DescriptionRaw ?? "Compra no cartão").Trim();
                 var pendente = string.Equals(t.Status, "PENDING", StringComparison.OrdinalIgnoreCase);
 
                 if (!porId.TryGetValue(t.Id, out var registro))
@@ -156,18 +166,115 @@ namespace ContaMente.Services.Pluggy
 
                 registro.NomeConta = conta.Nome;
                 registro.FinalCartao = t.CreditCardMetadata?.CardNumber ?? conta.Numero;
-                registro.Descricao = descricao.Length > 255 ? descricao[..255] : descricao;
+                registro.Descricao = Descricao(t);
                 registro.Valor = valor;
                 registro.Data = data;
                 registro.CategoriaPluggy = t.Category;
-                registro.NumeroParcela = t.CreditCardMetadata?.InstallmentNumber;
-                registro.TotalParcelas = t.CreditCardMetadata?.TotalInstallments;
                 registro.Pendente = pendente;
             }
 
             // Pendentes que sumiram do Pluggy e não foram reaproveitadas: removemos se ninguém aprovou ainda.
             foreach (var sumida in pendentesSumidas.Where(p => p.Status == StatusTransacaoPendente.Pendente && p.Data >= desde))
                 _context.TransacoesPendentes.Remove(sumida);
+        }
+
+        // Compras parceladas: o Pluggy manda cada parcela como uma transação (inclusive as futuras).
+        // Agrupamos pela compra e criamos um único registro, aprovado como Parcela no sistema.
+        // As parcelas que chegarem nos meses seguintes caem na mesma chave e são ignoradas.
+        private async Task ImportarParceladas(string userId, PluggyConta conta, List<PluggyApiTransaction> transacoes, DateTime inicioImportacao)
+        {
+            var limite = DateTime.UtcNow.Date.AddDays(1);
+
+            var compras = transacoes
+                .Where(t => EhSaida(t) && EhParcelada(t))
+                .GroupBy(t => ChaveCompra(conta.PluggyAccountId, t))
+                .ToList();
+
+            // Registros de parcelas individuais criados antes do agrupamento existir: descartamos os não aprovados.
+            var legados = await _context.TransacoesPendentes
+                .Where(t => t.UserId == userId && t.PluggyAccountId == conta.PluggyAccountId && t.ChaveCompra == null
+                            && t.TotalParcelas > 1 && t.Status == StatusTransacaoPendente.Pendente)
+                .ToListAsync();
+            _context.TransacoesPendentes.RemoveRange(legados);
+
+            if (compras.Count == 0) return;
+
+            var chaves = compras.Select(g => g.Key).ToList();
+            var existentes = await _context.TransacoesPendentes
+                .Where(t => t.UserId == userId && t.ChaveCompra != null && chaves.Contains(t.ChaveCompra))
+                .ToDictionaryAsync(t => t.ChaveCompra!);
+
+            foreach (var compra in compras)
+            {
+                var parcelas = compra.OrderBy(t => t.CreditCardMetadata?.InstallmentNumber ?? 0).ThenBy(t => t.Date).ToList();
+                var primeira = parcelas[0];
+                var meta = primeira.CreditCardMetadata!;
+                var totalParcelas = meta.TotalInstallments!.Value;
+                var valorParcela = Math.Round(Math.Abs(primeira.Amount), 2);
+                var dataCompra = DataCompra(primeira);
+
+                // Só compras feitas a partir do início da importação (evita trazer parcelamentos antigos já lançados à mão).
+                if (dataCompra < inicioImportacao || dataCompra >= limite) continue;
+
+                if (!existentes.TryGetValue(compra.Key, out var registro))
+                {
+                    registro = new TransacaoPendente
+                    {
+                        PluggyTransactionId = primeira.Id,
+                        PluggyAccountId = conta.PluggyAccountId,
+                        UserId = userId,
+                        ChaveCompra = compra.Key,
+                    };
+                    _context.TransacoesPendentes.Add(registro);
+                    existentes[compra.Key] = registro;
+                }
+                else if (registro.Status != StatusTransacaoPendente.Pendente)
+                {
+                    continue;
+                }
+
+                // Valor total: soma das parcelas quando vieram todas; senão o total informado; senão parcela × n.
+                var numeros = parcelas.Select(p => p.CreditCardMetadata?.InstallmentNumber).Where(n => n.HasValue).Distinct().Count();
+                var valorTotal = numeros == totalParcelas
+                    ? Math.Round(parcelas.GroupBy(p => p.CreditCardMetadata!.InstallmentNumber).Sum(g => Math.Abs(g.First().Amount)), 2)
+                    : meta.TotalAmount is > 0
+                        ? Math.Round(Math.Abs(meta.TotalAmount.Value), 2)
+                        : Math.Round(valorParcela * totalParcelas, 2);
+
+                registro.NomeConta = conta.Nome;
+                registro.FinalCartao = meta.CardNumber ?? conta.Numero;
+                registro.Descricao = Descricao(primeira);
+                registro.Valor = valorParcela;
+                registro.ValorTotal = valorTotal;
+                registro.Data = dataCompra;
+                registro.CategoriaPluggy = primeira.Category;
+                registro.NumeroParcela = meta.InstallmentNumber;
+                registro.TotalParcelas = totalParcelas;
+                registro.Pendente = false;
+            }
+        }
+
+        private static DateTime DataCompra(PluggyApiTransaction t)
+        {
+            var meta = t.CreditCardMetadata!;
+            if (meta.PurchaseDate.HasValue)
+                return DateTime.SpecifyKind(meta.PurchaseDate.Value, DateTimeKind.Utc);
+
+            // Sem data da compra: estima pela data da parcela recuando (n - 1) meses.
+            var n = meta.InstallmentNumber ?? 1;
+            return DateTime.SpecifyKind(t.Date.AddMonths(-(n - 1)).Date, DateTimeKind.Utc);
+        }
+
+        // Identifica a compra: mesma conta, mesma data/hora da compra e mesmo número de parcelas.
+        // (O valor fica de fora: a última parcela costuma ter centavos de diferença.)
+        private static string ChaveCompra(string accountId, PluggyApiTransaction t)
+        {
+            var meta = t.CreditCardMetadata!;
+            if (meta.PurchaseDate.HasValue)
+                return $"{accountId}|{meta.PurchaseDate.Value.ToUniversalTime():yyyy-MM-ddTHH:mm:ss.fff}|{meta.TotalInstallments}";
+
+            var descricao = new string(Descricao(t).ToLowerInvariant().Where(char.IsLetter).ToArray());
+            return $"{accountId}|{DataCompra(t):yyyy-MM}|{meta.TotalInstallments}|{descricao}";
         }
     }
 }

@@ -38,6 +38,15 @@ namespace ContaMente.Controllers
             return Ok(new { movimentacaoId = movimentacao.Id });
         }
 
+        [HttpPost("{id:int}/aprovar-parcelada")]
+        public async Task<IActionResult> AprovarParcelada(int id, [FromBody] CreateParcelaDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var parcela = await _service.AprovarParcelada(id, dto, UserId);
+            return Ok(new { parcelaId = parcela.Id });
+        }
+
         [HttpPost("{id:int}/ignorar")]
         public async Task<IActionResult> Ignorar(int id)
         {

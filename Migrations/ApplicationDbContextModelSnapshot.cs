@@ -489,6 +489,9 @@ namespace ContaMente.Migrations
                     b.Property<string>("CategoriaPluggy")
                         .HasColumnType("text");
 
+                    b.Property<string>("ChaveCompra")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("Data")
                         .HasColumnType("timestamp with time zone");
 
@@ -510,6 +513,9 @@ namespace ContaMente.Migrations
                         .HasColumnType("text");
 
                     b.Property<int?>("NumeroParcela")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParcelaId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("Pendente")
@@ -536,9 +542,16 @@ namespace ContaMente.Migrations
                     b.Property<double>("Valor")
                         .HasColumnType("double precision");
 
+                    b.Property<double?>("ValorTotal")
+                        .HasColumnType("double precision");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MovimentacaoId");
+
+                    b.HasIndex("ParcelaId");
+
+                    b.HasIndex("UserId", "ChaveCompra");
 
                     b.HasIndex("UserId", "PluggyTransactionId")
                         .IsUnique();
@@ -725,6 +738,11 @@ namespace ContaMente.Migrations
                         .HasForeignKey("MovimentacaoId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("ContaMente.Models.Parcela", "Parcela")
+                        .WithMany()
+                        .HasForeignKey("ParcelaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ContaMente.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -732,6 +750,8 @@ namespace ContaMente.Migrations
                         .IsRequired();
 
                     b.Navigation("Movimentacao");
+
+                    b.Navigation("Parcela");
 
                     b.Navigation("User");
                 });

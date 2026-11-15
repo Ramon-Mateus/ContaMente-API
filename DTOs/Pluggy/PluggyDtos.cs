@@ -17,9 +17,11 @@ namespace ContaMente.DTOs.Pluggy
         public string? CategoriaPluggy { get; set; }
         public int? NumeroParcela { get; set; }
         public int? TotalParcelas { get; set; }
+        public double? ValorTotal { get; set; }
         public bool Pendente { get; set; }
         public int Status { get; set; }
         public int? CartaoSugeridoId { get; set; }
         public int? MovimentacaoId { get; set; }
+        public int? ParcelaId { get; set; }
     }
 }
