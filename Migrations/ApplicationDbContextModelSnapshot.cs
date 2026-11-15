@@ -400,6 +400,154 @@ namespace ContaMente.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PluggyConta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CartaoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Numero")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PluggyAccountId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CartaoId");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("PluggyAccountId")
+                        .IsUnique();
+
+                    b.ToTable("PluggyContas");
+                });
+
+            modelBuilder.Entity("PluggyItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErroUltimaAtualizacao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeConector")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PluggyItemId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("UltimaSincronizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PluggyItemId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PluggyItens");
+                });
+
+            modelBuilder.Entity("TransacaoPendente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CategoriaPluggy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FinalCartao")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ImportadaEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("MovimentacaoId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NomeConta")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("NumeroParcela")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Pendente")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PluggyAccountId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PluggyTransactionId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalParcelas")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<double>("Valor")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MovimentacaoId");
+
+                    b.HasIndex("UserId", "PluggyTransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("TransacoesPendentes");
+                });
+
             modelBuilder.Entity("UserConfiguration", b =>
                 {
                     b.Property<int>("Id")
@@ -541,6 +689,53 @@ namespace ContaMente.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PluggyConta", b =>
+                {
+                    b.HasOne("Cartao", "Cartao")
+                        .WithMany()
+                        .HasForeignKey("CartaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("PluggyItem", "Item")
+                        .WithMany("Contas")
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cartao");
+
+                    b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("PluggyItem", b =>
+                {
+                    b.HasOne("ContaMente.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TransacaoPendente", b =>
+                {
+                    b.HasOne("ContaMente.Models.Movimentacao", "Movimentacao")
+                        .WithMany()
+                        .HasForeignKey("MovimentacaoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ContaMente.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movimentacao");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("UserConfiguration", b =>
                 {
                     b.HasOne("ContaMente.Models.User", "User")
@@ -575,6 +770,11 @@ namespace ContaMente.Migrations
             modelBuilder.Entity("ContaMente.Models.Responsavel", b =>
                 {
                     b.Navigation("Movimentacoes");
+                });
+
+            modelBuilder.Entity("PluggyItem", b =>
+                {
+                    b.Navigation("Contas");
                 });
 #pragma warning restore 612, 618
         }

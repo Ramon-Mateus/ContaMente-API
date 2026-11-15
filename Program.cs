@@ -10,6 +10,7 @@ using DotNetEnv;
 using Hangfire;
 using Hangfire.PostgreSql;
 using ContaMente.Middlewares;
+using ContaMente.Services.Pluggy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,9 @@ builder.Services.AddScoped<IUserConfigurationRepository, UserConfigurationReposi
 builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
 builder.Services.AddScoped<IMovimentacaoParcelaService, MovimentacaoParcelaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IPluggyClient, PluggyClient>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped<IPluggySyncService, PluggySyncService>();
+builder.Services.AddScoped<ITransacaoPendenteService, TransacaoPendenteService>();
 
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -93,6 +97,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 var app = builder.Build();
 
 app.UseHangfireDashboard();
+
+if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PLUGGY_CLIENT_ID")))
+{
+    // Consulta periódica ao Pluggy (cobre o caso do webhook não estar acessível, ex.: localhost).
+    var cronPluggy = Environment.GetEnvironmentVariable("PLUGGY_SYNC_CRON") ?? "0 */2 * * *";
+    app.Services.GetRequiredService<IRecurringJobManager>()
+        .AddOrUpdate<IPluggySyncService>("pluggy-sync", s => s.SincronizarTodos(), cronPluggy);
+}
 
 if (app.Environment.IsDevelopment())
 {
