@@ -204,6 +204,16 @@ namespace ContaMente.Services.Pluggy
                 .Where(t => t.UserId == userId && t.ChaveCompra != null && chaves.Contains(t.ChaveCompra))
                 .ToDictionaryAsync(t => t.ChaveCompra!);
 
+            // Registros que já usam o id de alguma parcela (PluggyTransactionId é único por usuário):
+            // parcelas legadas aprovadas/ignoradas ou compras agrupadas cuja chave mudou.
+            var idsLegadosRemovidos = legados.Select(l => l.Id).ToHashSet();
+            var idsParcelas = compras.SelectMany(g => g.Select(t => t.Id)).Distinct().ToList();
+            var porTransacao = (await _context.TransacoesPendentes
+                    .Where(t => t.UserId == userId && idsParcelas.Contains(t.PluggyTransactionId))
+                    .ToListAsync())
+                .Where(t => !idsLegadosRemovidos.Contains(t.Id))
+                .ToDictionary(t => t.PluggyTransactionId);
+
             foreach (var compra in compras)
             {
                 var parcelas = compra.OrderBy(t => t.CreditCardMetadata?.InstallmentNumber ?? 0).ThenBy(t => t.Date).ToList();
@@ -216,7 +226,18 @@ namespace ContaMente.Services.Pluggy
                 // Só compras feitas a partir do início da importação (evita trazer parcelamentos antigos já lançados à mão).
                 if (dataCompra < inicioImportacao || dataCompra >= limite) continue;
 
+                var jaRegistradas = parcelas
+                    .Select(p => porTransacao.GetValueOrDefault(p.Id))
+                    .Where(r => r != null)
+                    .ToList();
+
+                // Alguma parcela já foi aprovada/ignorada individualmente (antes do agrupamento): compra já tratada.
+                if (jaRegistradas.Any(r => r!.ChaveCompra == null)) continue;
+
                 if (!existentes.TryGetValue(compra.Key, out var registro))
+                    registro = jaRegistradas.FirstOrDefault(r => r!.ChaveCompra != null);
+
+                if (registro == null)
                 {
                     registro = new TransacaoPendente
                     {
