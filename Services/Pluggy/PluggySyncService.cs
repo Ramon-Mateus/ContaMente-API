@@ -14,13 +14,13 @@ namespace ContaMente.Services.Pluggy
     public class PluggySyncService : IPluggySyncService
     {
         private readonly ApplicationDbContext _context;
-        private readonly IPluggyClient _pluggy;
+        private readonly IPluggyClientFactory _pluggyFactory;
         private readonly ILogger<PluggySyncService> _logger;
 
-        public PluggySyncService(ApplicationDbContext context, IPluggyClient pluggy, ILogger<PluggySyncService> logger)
+        public PluggySyncService(ApplicationDbContext context, IPluggyClientFactory pluggyFactory, ILogger<PluggySyncService> logger)
         {
             _context = context;
-            _pluggy = pluggy;
+            _pluggyFactory = pluggyFactory;
             _logger = logger;
         }
 
@@ -29,9 +29,11 @@ namespace ContaMente.Services.Pluggy
 
         public async Task SincronizarTodos()
         {
-            if (!_pluggy.Configurado) return;
-
-            var itens = await _context.PluggyItens.Select(i => i.PluggyItemId).ToListAsync();
+            // Só itens de usuários que cadastraram as credenciais do Pluggy no perfil.
+            var itens = await _context.PluggyItens
+                .Where(i => _context.PluggyCredenciais.Any(c => c.UserId == i.UserId))
+                .Select(i => i.PluggyItemId)
+                .ToListAsync();
             foreach (var itemId in itens)
             {
                 try
@@ -57,12 +59,19 @@ namespace ContaMente.Services.Pluggy
                 return;
             }
 
-            var apiItem = await _pluggy.GetItem(pluggyItemId);
+            var pluggy = await _pluggyFactory.ParaUsuario(item.UserId);
+            if (pluggy == null)
+            {
+                _logger.LogWarning("Pluggy: usuário do item {ItemId} não tem credenciais cadastradas, ignorando.", pluggyItemId);
+                return;
+            }
+
+            var apiItem = await pluggy.GetItem(pluggyItemId);
             item.NomeConector = apiItem.Connector?.Name ?? item.NomeConector;
             item.Status = apiItem.Status;
             item.ErroUltimaAtualizacao = apiItem.Error?.Message;
 
-            var contasApi = (await _pluggy.GetAccounts(pluggyItemId))
+            var contasApi = (await pluggy.GetAccounts(pluggyItemId))
                 .Where(a => string.Equals(a.Type, "CREDIT", StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
@@ -79,7 +88,7 @@ namespace ContaMente.Services.Pluggy
                 conta.Nome = contaApi.MarketingName ?? contaApi.Name ?? "Cartão";
                 conta.Numero = contaApi.Number;
 
-                var transacoes = await _pluggy.GetTransactions(contaApi.Id, desde);
+                var transacoes = await pluggy.GetTransactions(contaApi.Id, desde);
                 var inicioImportacao = item.CriadoEm.AddDays(-DiasImportacaoInicial).Date;
                 await ImportarAVista(item.UserId, conta, transacoes, desde);
                 await ImportarParceladas(item.UserId, conta, transacoes, inicioImportacao);

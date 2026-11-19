@@ -43,7 +43,8 @@ builder.Services.AddScoped<IUserConfigurationRepository, UserConfigurationReposi
 builder.Services.AddScoped<ITipoPagamentoService, TipoPagamentoService>();
 builder.Services.AddScoped<IMovimentacaoParcelaService, MovimentacaoParcelaService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddHttpClient<IPluggyClient, PluggyClient>(c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddHttpClient(PluggyClientFactory.NomeHttpClient, c => c.Timeout = TimeSpan.FromSeconds(60));
+builder.Services.AddScoped<IPluggyClientFactory, PluggyClientFactory>();
 builder.Services.AddScoped<IPluggySyncService, PluggySyncService>();
 builder.Services.AddScoped<ITransacaoPendenteService, TransacaoPendenteService>();
 
@@ -112,13 +113,11 @@ if (string.Equals(Environment.GetEnvironmentVariable("RUN_MIGRATIONS"), "true", 
 
 app.UseHangfireDashboard();
 
-if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PLUGGY_CLIENT_ID")))
-{
-    // Consulta periódica ao Pluggy (cobre o caso do webhook não estar acessível, ex.: localhost).
-    var cronPluggy = Environment.GetEnvironmentVariable("PLUGGY_SYNC_CRON") ?? "0 */2 * * *";
-    app.Services.GetRequiredService<IRecurringJobManager>()
-        .AddOrUpdate<IPluggySyncService>("pluggy-sync", s => s.SincronizarTodos(), cronPluggy);
-}
+// Consulta periódica ao Pluggy (cobre o caso do webhook não estar acessível, ex.: localhost).
+// As credenciais são de cada usuário (perfil); usuários sem credenciais são ignorados.
+var cronPluggy = Environment.GetEnvironmentVariable("PLUGGY_SYNC_CRON") ?? "0 */2 * * *";
+app.Services.GetRequiredService<IRecurringJobManager>()
+    .AddOrUpdate<IPluggySyncService>("pluggy-sync", s => s.SincronizarTodos(), cronPluggy);
 
 if (app.Environment.IsDevelopment())
 {

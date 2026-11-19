@@ -437,6 +437,38 @@ namespace ContaMente.Migrations
                     b.ToTable("PluggyContas");
                 });
 
+            modelBuilder.Entity("PluggyCredencial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AtualizadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClientSecretCriptografado")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("PluggyCredenciais");
+                });
+
             modelBuilder.Entity("PluggyItem", b =>
                 {
                     b.Property<int>("Id")
@@ -718,6 +750,17 @@ namespace ContaMente.Migrations
                     b.Navigation("Cartao");
 
                     b.Navigation("Item");
+                });
+
+            modelBuilder.Entity("PluggyCredencial", b =>
+                {
+                    b.HasOne("ContaMente.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PluggyItem", b =>

@@ -6,6 +6,10 @@ namespace ContaMente.DTOs.Pluggy
 
     public record VincularCartaoDto(int? CartaoId);
 
+    public record SalvarPluggyCredenciaisDto(string? ClientId, string? ClientSecret);
+
+    public record PluggyCredenciaisDto(bool Configurado, string? ClientId, DateTime? AtualizadoEm);
+
     public class TransacaoPendenteDto
     {
         public int Id { get; set; }

@@ -16,6 +16,7 @@ namespace ContaMente.Contexts
         public DbSet<Cartao> Cartoes => Set<Cartao>();
         public DbSet<UserConfiguration> UserConfigurations => Set<UserConfiguration>();
         public DbSet<PluggyItem> PluggyItens => Set<PluggyItem>();
+        public DbSet<PluggyCredencial> PluggyCredenciais => Set<PluggyCredencial>();
         public DbSet<PluggyConta> PluggyContas => Set<PluggyConta>();
         public DbSet<TransacaoPendente> TransacoesPendentes => Set<TransacaoPendente>();
 
@@ -63,6 +64,13 @@ namespace ContaMente.Contexts
                 e.HasIndex(i => i.PluggyItemId).IsUnique();
                 e.HasOne(i => i.User).WithMany().HasForeignKey(i => i.UserId).OnDelete(DeleteBehavior.Cascade);
                 e.HasMany(i => i.Contas).WithOne(c => c.Item).HasForeignKey(c => c.ItemId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PluggyCredencial>(e =>
+            {
+                e.HasIndex(c => c.UserId).IsUnique();
+                e.Property(c => c.ClientId).HasMaxLength(100);
+                e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<PluggyConta>(e =>

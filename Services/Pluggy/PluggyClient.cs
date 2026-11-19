@@ -1,7 +1,12 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ContaMente.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContaMente.Services.Pluggy
 {
@@ -84,7 +89,7 @@ namespace ContaMente.Services.Pluggy
 
     public interface IPluggyClient
     {
-        bool Configurado { get; }
+        Task ValidarCredenciais();
         Task<string> CreateConnectToken(string clientUserId, string? itemId = null);
         Task<PluggyApiItem> GetItem(string itemId);
         Task UpdateItem(string itemId);
@@ -93,11 +98,44 @@ namespace ContaMente.Services.Pluggy
         Task<List<PluggyApiTransaction>> GetTransactions(string accountId, DateTime from);
     }
 
+    public interface IPluggyClientFactory
+    {
+        IPluggyClient Criar(string clientId, string clientSecret);
+        // Cliente com as credenciais que o usuário cadastrou no perfil; null se ele não cadastrou.
+        Task<IPluggyClient?> ParaUsuario(string userId);
+    }
+
+    public class PluggyClientFactory : IPluggyClientFactory
+    {
+        public const string NomeHttpClient = "pluggy";
+
+        private readonly IHttpClientFactory _httpFactory;
+        private readonly ApplicationDbContext _context;
+        private readonly ILogger<PluggyClient> _logger;
+
+        public PluggyClientFactory(IHttpClientFactory httpFactory, ApplicationDbContext context, ILogger<PluggyClient> logger)
+        {
+            _httpFactory = httpFactory;
+            _context = context;
+            _logger = logger;
+        }
+
+        public IPluggyClient Criar(string clientId, string clientSecret) =>
+            new PluggyClient(_httpFactory.CreateClient(NomeHttpClient), _logger, clientId, clientSecret);
+
+        public async Task<IPluggyClient?> ParaUsuario(string userId)
+        {
+            var cred = await _context.PluggyCredenciais.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == userId);
+            if (cred == null) return null;
+            return Criar(cred.ClientId, CredencialCripto.Descriptografar(cred.ClientSecretCriptografado));
+        }
+    }
+
     public class PluggyClient : IPluggyClient
     {
-        private static readonly SemaphoreSlim _authLock = new(1, 1);
-        private static string? _apiKey;
-        private static DateTime _apiKeyExpiraEm = DateTime.MinValue;
+        // API keys em cache por conta Pluggy (cada usuário tem a sua).
+        private static readonly ConcurrentDictionary<string, (string ApiKey, DateTime ExpiraEm)> _apiKeys = new();
+        private static readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
         private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web)
         {
@@ -106,44 +144,49 @@ namespace ContaMente.Services.Pluggy
 
         private readonly HttpClient _http;
         private readonly ILogger<PluggyClient> _logger;
+        private readonly string _clientId;
+        private readonly string _clientSecret;
+        private readonly string _chaveCache;
 
-        public PluggyClient(HttpClient http, ILogger<PluggyClient> logger)
+        public PluggyClient(HttpClient http, ILogger<PluggyClient> logger, string clientId, string clientSecret)
         {
             _http = http;
             _http.BaseAddress ??= new Uri(Environment.GetEnvironmentVariable("PLUGGY_API_URL") ?? "https://api.pluggy.ai/");
             _logger = logger;
+            _clientId = clientId;
+            _clientSecret = clientSecret;
+            // O secret entra no hash para que trocá-lo invalide a key em cache.
+            _chaveCache = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(clientId + ":" + clientSecret)));
         }
 
-        private static string? ClientId => Environment.GetEnvironmentVariable("PLUGGY_CLIENT_ID");
-        private static string? ClientSecret => Environment.GetEnvironmentVariable("PLUGGY_CLIENT_SECRET");
-
-        public bool Configurado => !string.IsNullOrWhiteSpace(ClientId) && !string.IsNullOrWhiteSpace(ClientSecret);
+        public async Task ValidarCredenciais() => await GetApiKey(forcarRenovacao: true);
 
         // A API key do Pluggy vale 2h; renovamos com folga.
         private async Task<string> GetApiKey(bool forcarRenovacao = false)
         {
-            if (!Configurado)
-                throw new InvalidOperationException("Integração com o Pluggy não configurada (PLUGGY_CLIENT_ID / PLUGGY_CLIENT_SECRET).");
+            if (!forcarRenovacao && _apiKeys.TryGetValue(_chaveCache, out var c) && DateTime.UtcNow < c.ExpiraEm)
+                return c.ApiKey;
 
-            if (!forcarRenovacao && _apiKey != null && DateTime.UtcNow < _apiKeyExpiraEm)
-                return _apiKey;
-
-            await _authLock.WaitAsync();
+            var trava = _locks.GetOrAdd(_chaveCache, _ => new SemaphoreSlim(1, 1));
+            await trava.WaitAsync();
             try
             {
-                if (!forcarRenovacao && _apiKey != null && DateTime.UtcNow < _apiKeyExpiraEm)
-                    return _apiKey;
+                if (!forcarRenovacao && _apiKeys.TryGetValue(_chaveCache, out c) && DateTime.UtcNow < c.ExpiraEm)
+                    return c.ApiKey;
 
-                var resp = await _http.PostAsJsonAsync("auth", new { clientId = ClientId, clientSecret = ClientSecret }, _json);
+                var resp = await _http.PostAsJsonAsync("auth", new { clientId = _clientId, clientSecret = _clientSecret }, _json);
+                if (resp.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden
+                    or System.Net.HttpStatusCode.BadRequest)
+                    throw new ArgumentException("Credenciais do Pluggy inválidas. Confira o Client ID e o Client Secret no seu perfil.");
                 await GarantirSucesso(resp, "autenticar");
                 var body = await resp.Content.ReadFromJsonAsync<JsonElement>(_json);
-                _apiKey = body.GetProperty("apiKey").GetString();
-                _apiKeyExpiraEm = DateTime.UtcNow.AddMinutes(100);
-                return _apiKey!;
+                var apiKey = body.GetProperty("apiKey").GetString()!;
+                _apiKeys[_chaveCache] = (apiKey, DateTime.UtcNow.AddMinutes(100));
+                return apiKey;
             }
             finally
             {
-                _authLock.Release();
+                trava.Release();
             }
         }
 
